@@ -1,4 +1,4 @@
-import { useMutation } from "@apollo/client";
+import { useMutation, useQuery } from "@apollo/client";
 import {
   IconAlertTriangle,
   IconDeviceFloppy,
@@ -12,7 +12,7 @@ import { useNavigate } from "react-router";
 import { Button } from "erxes-ui";
 import manifest from "../../../erxes.json" with { type: "json" };
 import { useAuth } from "../auth/AuthContext";
-import { RESET_DEMO } from "~/graphql";
+import { AI_INFO_QUERY, DEMO_QUERY, RESET_DEMO, SET_LEADERBOARD_VISIBILITY } from "~/graphql";
 import {
   ErrorBanner,
   PageHeading,
@@ -34,12 +34,47 @@ export const SettingsPage = () => {
   const [confirmReset, setConfirmReset] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [resetDemo, { loading: resetting }] = useMutation(RESET_DEMO);
+  const [setVisibility, { loading: savingVisibility }] = useMutation(
+    SET_LEADERBOARD_VISIBILITY,
+  );
+  const [visibility, setVisibilityState] = useState<boolean>();
+  const member = session?.member;
+  const isStudent = member?.role === "student";
+  const { data: studentDemo } = useQuery(DEMO_QUERY, {
+    variables: { role: "student", memberId: member?._id },
+    skip: !isStudent || !member,
+    fetchPolicy: "cache-and-network",
+  });
+  const { data: aiData } = useQuery(AI_INFO_QUERY, {
+    fetchPolicy: "cache-and-network",
+  });
 
-  if (!session) {
+  if (!session || !member) {
     return null;
   }
 
-  const member = session.member;
+  const studentMember = studentDemo?.eduflowDemo.students.find(
+    (student) => student._id === member._id,
+  );
+  const leaderboardVisible =
+    visibility ?? studentMember?.leaderboardVisible ?? true;
+
+  const toggleVisibility = async (next: boolean) => {
+    setMessage(null);
+    setVisibilityState(next);
+    try {
+      await setVisibility({
+        variables: { studentId: member._id, visible: next },
+      });
+    } catch (cause) {
+      setVisibilityState(!next);
+      setMessage(
+        cause instanceof Error
+          ? cause.message
+          : "Тохиргоог хадгалж чадсангүй.",
+      );
+    }
+  };
 
   const savePreferences = () => {
     window.localStorage.setItem(SMS_KEY, smsEnabled ? "on" : "off");
@@ -204,6 +239,61 @@ export const SettingsPage = () => {
               </Button>
             </div>
           )}
+        </SectionCard>
+
+        {isStudent && (
+          <SectionCard
+            title="Тэргүүлэгчдийн тохиргоо"
+            description="Нийтэд нээлттэй эсэхээ өөрөө шийднэ. Багш, эцэг эх үргэлж харна."
+          >
+            <label className="eduflow:flex eduflow:items-center eduflow:justify-between eduflow:gap-3 eduflow:rounded-xl eduflow:border eduflow:border-edu-border eduflow:bg-edu-card2/50 eduflow:px-3 eduflow:py-2.5">
+              <span>
+                <span className="eduflow:block eduflow:text-xs eduflow:text-white">
+                  Тэргүүлэгчид харагдах
+                </span>
+                <span className="eduflow:block eduflow:text-[10px] eduflow:text-edu-text">
+                  {leaderboardVisible
+                    ? "Нэр, дүн, цуврал нийтэд харагдана"
+                    : "Зөвхөн багш, эцэг эх харна"}
+                </span>
+              </span>
+              <input
+                type="checkbox"
+                checked={leaderboardVisible}
+                disabled={savingVisibility}
+                onChange={(event) => void toggleVisibility(event.target.checked)}
+                className="eduflow:size-4 eduflow:accent-[#C4B5FD]"
+              />
+            </label>
+          </SectionCard>
+        )}
+
+        <SectionCard title="AI шалгалт">
+          <div className="eduflow:flex eduflow:items-center eduflow:justify-between eduflow:gap-2">
+            <div>
+              <p className="eduflow:text-xs eduflow:text-white">
+                {aiData?.eduflowAiInfo.configured
+                  ? "Gemma 4 бэлэн"
+                  : "Жишээ AI (Gemma тохируулаагүй)"}
+              </p>
+              <p className="eduflow:text-[10px] eduflow:text-edu-text">
+                {aiData?.eduflowAiInfo.model ?? "demo"}
+              </p>
+            </div>
+            <span
+              className={
+                aiData?.eduflowAiInfo.configured
+                  ? "eduflow:rounded-full eduflow:bg-edu-cyan/10 eduflow:px-2.5 eduflow:py-0.5 eduflow:text-[10px] eduflow:text-edu-cyan"
+                  : "eduflow:rounded-full eduflow:bg-edu-purple/15 eduflow:px-2.5 eduflow:py-0.5 eduflow:text-[10px] eduflow:text-edu-lav"
+              }
+            >
+              {aiData?.eduflowAiInfo.configured ? "Gemma" : "Demo"}
+            </span>
+          </div>
+          <p className="eduflow:mt-2 eduflow:text-[10px] eduflow:leading-relaxed eduflow:text-edu-text">
+            AI Studio API key-г `GEMINI_API_KEY` гэж `.env`-д нэмээд API-г
+            restart хийнэ. Загвар: `gemma-4-26b-a4b-it`.
+          </p>
         </SectionCard>
 
         <SectionCard title="Плагины мэдээлэл">

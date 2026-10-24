@@ -2,7 +2,7 @@ import {
   IconBook,
   IconClipboardCheck,
   IconClipboardList,
-  IconFlame,
+  IconTrophy,
   IconUsers,
 } from "@tabler/icons-react";
 import { Link } from "react-router";
@@ -178,10 +178,10 @@ export const TeacherHomePage = () => {
           accent="lav"
         />
         <StatCard
-          label="Дундаж цуврал"
-          value={`${demo.stats.averageStreak} өдөр`}
-          hint="Ангийн хөдөлгөөн"
-          icon={IconFlame}
+          label="Дундаж дүн"
+          value={`${demo.stats.homeworkGrade}%`}
+          hint="Ангийн гүйцэтгэл"
+          icon={IconTrophy}
           accent="cyan"
         />
       </div>

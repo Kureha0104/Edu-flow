@@ -55,9 +55,7 @@ export const StudentHomePage = () => {
   const approved = demo.submissions.filter(
     (submission) => submission.status === "approved",
   ).length;
-  const pending = demo.submissions.filter(
-    (submission) => submission.status !== "approved",
-  ).length;
+  const pending = Math.max(0, demo.homeworks.length - approved);
 
   return (
     <div className="eduflow:grid eduflow:gap-5">
@@ -75,7 +73,7 @@ export const StudentHomePage = () => {
         }
       />
 
-      <StreakCard member={member} />
+      <StreakCard member={member} grade={demo.stats.homeworkGrade} />
 
       <div className="eduflow:grid eduflow:gap-3 eduflow:sm:grid-cols-3">
         <StatCard
@@ -93,9 +91,9 @@ export const StudentHomePage = () => {
           accent="blue"
         />
         <StatCard
-          label="Нийт оноо"
-          value={`${member.points} XP`}
-          hint={`Хамгийн урт цуврал ${member.longestStreak} өдөр`}
+          label="Дундаж дүн"
+          value={`${demo.stats.homeworkGrade}%`}
+          hint="Бүх даалгаврын гүйцэтгэл"
           icon={IconStar}
           accent="lav"
         />
@@ -207,7 +205,7 @@ export const StudentHomePage = () => {
 
           <div className="eduflow:flex eduflow:items-center eduflow:gap-2 eduflow:rounded-xl eduflow:border eduflow:border-edu-border eduflow:bg-edu-card eduflow:px-3 eduflow:py-2 eduflow:text-[10px] eduflow:text-edu-text">
             <IconFlame className="eduflow:size-4 eduflow:text-edu-lav" />
-            Цуврал зөвхөн сурагчид. Багш, эцэг эх XP цуглуулахгүй.
+            Цуврал зөвхөн сурагчид. Дүн нь баталгаажсан даалгавраар тооцогдоно.
           </div>
         </div>
       </div>

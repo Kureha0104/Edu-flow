@@ -1,11 +1,19 @@
 import { useMutation } from "@apollo/client";
-import { IconCheck, IconClipboardCheck, IconPlus } from "@tabler/icons-react";
+import {
+  IconCheck,
+  IconClipboardCheck,
+  IconFileText,
+  IconPaperclip,
+  IconPlus,
+  IconX,
+} from "@tabler/icons-react";
 import { useState, type FormEvent } from "react";
 import { Button, Input, Textarea } from "erxes-ui";
 import {
   CREATE_LESSON_PLAN,
   UPDATE_LESSON_PLAN_STATUS,
 } from "~/graphql";
+import { fileToDataUrl } from "../modules/eduflow/image";
 import { useEduflowDemo } from "../modules/eduflow/useDemo";
 import {
   EmptyState,
@@ -16,6 +24,19 @@ import {
   formatDate,
   type LessonPlan,
 } from "../modules/eduflow/ui";
+
+type Attachment = {
+  name: string;
+  mimeType: string;
+  size: number;
+  data: string;
+};
+
+const ATTACHMENT_TYPES = [
+  "application/pdf",
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+];
 
 const statusLabel = (status: string) =>
   status === "draft" ? "Ноорог" : status === "review" ? "Хяналтад" : "Батлагдсан";
@@ -92,6 +113,22 @@ const PlanCard = ({
       )}
     </div>
 
+    {plan.attachments.length > 0 && (
+      <div className="eduflow:mt-3 eduflow:flex eduflow:flex-wrap eduflow:gap-1.5">
+        {plan.attachments.map((attachment) => (
+          <a
+            key={`${attachment.name}-${attachment.size}`}
+            href={attachment.data}
+            download={attachment.name}
+            className="eduflow:flex eduflow:items-center eduflow:gap-1.5 eduflow:rounded-lg eduflow:border eduflow:border-edu-border eduflow:bg-edu-bg/40 eduflow:px-2 eduflow:py-1 eduflow:text-[10px] eduflow:text-edu-lav eduflow:transition hover:eduflow:border-edu-lav/40 hover:eduflow:text-white"
+          >
+            <IconFileText className="eduflow:size-3.5" />
+            {attachment.name}
+          </a>
+        ))}
+      </div>
+    )}
+
     <div className="eduflow:mt-3 eduflow:flex eduflow:flex-wrap eduflow:gap-1.5">
       {plan.status === "draft" && (
         <Button type="button" size="sm" disabled={busy} onClick={() => onStatus(plan._id, "review")}>
@@ -122,6 +159,7 @@ const PlanCard = ({
 export const TeacherPlansPage = () => {
   const { demo, loading, error, refetch } = useEduflowDemo("teacher");
   const [open, setOpen] = useState(false);
+  const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [busyId, setBusyId] = useState<string>();
   const [message, setMessage] = useState<string | null>(null);
   const [form, setForm] = useState({
@@ -162,6 +200,7 @@ export const TeacherPlansPage = () => {
           content: form.content || null,
           materials: form.materials || null,
           assessment: form.assessment || null,
+          attachments,
         },
       });
       setForm((current) => ({
@@ -172,11 +211,47 @@ export const TeacherPlansPage = () => {
         materials: "",
         assessment: "",
       }));
+      setAttachments([]);
       setOpen(false);
       await refetch();
     } catch (cause) {
       setMessage(
         cause instanceof Error ? cause.message : "Төлөвлөгөө үүсгэж чадсангүй.",
+      );
+    }
+  };
+
+  const handleAttachment = async (file: File | undefined) => {
+    if (!file) return;
+    setMessage(null);
+
+    if (!ATTACHMENT_TYPES.includes(file.type)) {
+      setMessage("Зөвхөн PDF, DOC, DOCX файл хавсаргана уу.");
+      return;
+    }
+    if (file.size > 3 * 1024 * 1024) {
+      setMessage("Файл 3MB-аас бага байх ёстой.");
+      return;
+    }
+    if (attachments.length >= 3) {
+      setMessage("Хамгийн ихдээ 3 файл хавсаргана.");
+      return;
+    }
+
+    try {
+      const data = await fileToDataUrl(file);
+      setAttachments((current) => [
+        ...current,
+        {
+          name: file.name,
+          mimeType: file.type,
+          size: file.size,
+          data,
+        },
+      ]);
+    } catch (cause) {
+      setMessage(
+        cause instanceof Error ? cause.message : "Файлыг уншиж чадсангүй.",
       );
     }
   };
@@ -298,6 +373,47 @@ export const TeacherPlansPage = () => {
                 }
               />
             </label>
+            <div className="eduflow:grid eduflow:gap-1.5">
+              <span className="eduflow:text-[11px] eduflow:text-edu-text">
+                Хавсралт (PDF, DOC, DOCX · 3MB хүртэл)
+              </span>
+              <div className="eduflow:flex eduflow:flex-wrap eduflow:items-center eduflow:gap-2">
+                <label className="eduflow:inline-flex eduflow:cursor-pointer eduflow:items-center eduflow:gap-1.5 eduflow:rounded-lg eduflow:border eduflow:border-edu-lav/30 eduflow:bg-edu-purple/15 eduflow:px-3 eduflow:py-1.5 eduflow:text-[11px] eduflow:text-edu-lav hover:eduflow:bg-edu-purple/25">
+                  <IconPaperclip className="eduflow:size-3.5" />
+                  Файл нэмэх
+                  <input
+                    type="file"
+                    accept=".pdf,.doc,.docx"
+                    className="eduflow:hidden"
+                    onChange={(event) => {
+                      void handleAttachment(event.target.files?.[0]);
+                      event.target.value = "";
+                    }}
+                  />
+                </label>
+                {attachments.map((attachment) => (
+                  <span
+                    key={`${attachment.name}-${attachment.size}`}
+                    className="eduflow:flex eduflow:items-center eduflow:gap-1.5 eduflow:rounded-lg eduflow:border eduflow:border-edu-border eduflow:bg-edu-card2 eduflow:px-2 eduflow:py-1 eduflow:text-[10px] eduflow:text-edu-text"
+                  >
+                    <IconFileText className="eduflow:size-3.5 eduflow:text-edu-lav" />
+                    {attachment.name}
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setAttachments((current) =>
+                          current.filter((item) => item !== attachment),
+                        )
+                      }
+                      aria-label={`${attachment.name} хасах`}
+                      className="eduflow:text-edu-text hover:eduflow:text-white"
+                    >
+                      <IconX className="eduflow:size-3" />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            </div>
             <div className="eduflow:flex eduflow:justify-end eduflow:gap-2">
               <Button type="button" variant="ghost" size="sm" onClick={() => setOpen(false)}>
                 Цуцлах

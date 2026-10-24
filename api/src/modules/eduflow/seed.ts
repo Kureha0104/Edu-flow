@@ -36,6 +36,7 @@ export const ensureDemoData = async (models: IModels) => {
     email: "sara.teacher@school.eduflow.local",
     role: "teacher",
     grade: "5А",
+    leaderboardVisible: false,
   });
 
   const parent = await models.EduflowMembers.create({
@@ -43,6 +44,7 @@ export const ensureDemoData = async (models: IModels) => {
     email: "tuya.parent@example.com",
     role: "parent",
     phone: "+976 9911 2233",
+    leaderboardVisible: false,
   });
 
   const anu = await models.EduflowMembers.create({
@@ -51,6 +53,7 @@ export const ensureDemoData = async (models: IModels) => {
     role: "student",
     grade: "5А анги",
     parentId: String(parent._id),
+    leaderboardVisible: true,
     streak: 6,
     longestStreak: 9,
     points: 480,
@@ -63,6 +66,7 @@ export const ensureDemoData = async (models: IModels) => {
     role: "student",
     grade: "5А анги",
     parentId: String(parent._id),
+    leaderboardVisible: true,
     streak: 2,
     longestStreak: 4,
     points: 160,
@@ -75,6 +79,7 @@ export const ensureDemoData = async (models: IModels) => {
     role: "student",
     grade: "5А анги",
     parentId: String(parent._id),
+    leaderboardVisible: false,
     streak: 0,
     longestStreak: 1,
     points: 40,
@@ -177,6 +182,9 @@ export const ensureDemoData = async (models: IModels) => {
     ]),
     status: "approved",
     aiScore: 92,
+    aiProvider: "mock",
+    earnedPoints: 18,
+    gradePercent: 92,
     aiFeedback:
       "Зургаан хариулт бүгд зөв, бодолт нь ойлгомжтой. 6-р бодлогыг хялбарчилсан нь сайн байна!",
     submittedAt: daysFromNow(-1),
@@ -196,6 +204,9 @@ export const ensureDemoData = async (models: IModels) => {
     ]),
     status: "ai_checked",
     aiScore: 78,
+    aiProvider: "mock",
+    earnedPoints: 0,
+    gradePercent: 0,
     aiFeedback:
       "1–5 бодлого сайн байна. 6-р бодлого дуусаагүй — 6/8-ын хүртвэр, хуваарийг 2-оор хувааж хялбарчил.",
     submittedAt: daysFromNow(0),
@@ -211,6 +222,9 @@ export const ensureDemoData = async (models: IModels) => {
     ]),
     status: "needs_work",
     aiScore: 72,
+    aiProvider: "mock",
+    earnedPoints: 0,
+    gradePercent: 0,
     aiFeedback:
       "Гол санаа чинь ойролцоо байна, гэхдээ 2-р дэлгэрэнгүй гол санааг дэмжихийн оронд түүхийг дахин өгүүлж байна. Үнэгний магтаал бодлогыг хэрхэн шийдсэнийг тайлбарлаж үзээрэй.",
     submittedAt: daysFromNow(-1),

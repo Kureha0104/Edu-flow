@@ -13,6 +13,7 @@ export const DEMO_QUERY = gql(`
         pendingReviews
         approvedToday
         averageStreak
+        homeworkGrade
       }
       member {
         ...EduflowMemberFields
@@ -65,6 +66,7 @@ export const DEMO_QUERY = gql(`
     grade
     avatar
     parentId
+    leaderboardVisible
     streak
     longestStreak
     points
@@ -97,6 +99,9 @@ export const DEMO_QUERY = gql(`
     status
     aiFeedback
     aiScore
+    aiProvider
+    earnedPoints
+    gradePercent
     submittedAt
     completedAt
     student {
@@ -121,6 +126,12 @@ export const DEMO_QUERY = gql(`
     content
     materials
     assessment
+    attachments {
+      name
+      mimeType
+      size
+      data
+    }
     status
     reviewNote
     approvedAt
@@ -138,6 +149,8 @@ export const DEMO_QUERY = gql(`
     channel
     message
     status
+    providerId
+    error
     createdAt
     student {
       ...EduflowMemberFields
@@ -192,11 +205,13 @@ export const REVIEW_SUBMISSION = gql(`
     $submissionId: String!
     $decision: String!
     $feedback: String
+    $gradePercent: Int
   ) {
     eduflowReviewSubmission(
       submissionId: $submissionId
       decision: $decision
       feedback: $feedback
+      gradePercent: $gradePercent
     ) {
       _id
       status
@@ -206,8 +221,8 @@ export const REVIEW_SUBMISSION = gql(`
 `);
 
 export const NOTIFY_PARENT = gql(`
-  mutation eduflowNotifyParent($submissionId: String!) {
-    eduflowNotifyParent(submissionId: $submissionId) {
+  mutation eduflowNotifyParent($submissionId: String!, $message: String) {
+    eduflowNotifyParent(submissionId: $submissionId, message: $message) {
       _id
       message
       status
@@ -224,6 +239,7 @@ export const CREATE_LESSON_PLAN = gql(`
     $content: String
     $materials: String
     $assessment: String
+    $attachments: [EduflowAttachmentInput!]
   ) {
     eduflowCreateLessonPlan(
       title: $title
@@ -232,6 +248,7 @@ export const CREATE_LESSON_PLAN = gql(`
       content: $content
       materials: $materials
       assessment: $assessment
+      attachments: $attachments
     ) {
       _id
       title
@@ -401,5 +418,45 @@ export const ANSWER_QUIZ = gql(`
 export const RESET_DEMO = gql(`
   mutation eduflowResetDemo {
     eduflowResetDemo
+  }
+`);
+
+export const LEADERBOARD_QUERY = gql(`
+  query eduflowLeaderboard {
+    eduflowLeaderboard {
+      rank
+      grade
+      streak
+      approved
+      total
+      member {
+        _id
+        name
+        email
+        role
+        grade
+        avatar
+        leaderboardVisible
+      }
+    }
+  }
+`);
+
+export const AI_INFO_QUERY = gql(`
+  query eduflowAiInfo {
+    eduflowAiInfo {
+      configured
+      provider
+      model
+    }
+  }
+`);
+
+export const SET_LEADERBOARD_VISIBILITY = gql(`
+  mutation eduflowSetLeaderboardVisibility($studentId: String!, $visible: Boolean!) {
+    eduflowSetLeaderboardVisibility(studentId: $studentId, visible: $visible) {
+      _id
+      leaderboardVisible
+    }
   }
 `);

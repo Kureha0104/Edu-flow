@@ -6,12 +6,14 @@ import manifest from "../../erxes.json" with { type: "json" };
 import { AuthProvider, rolePath, useAuth, type SessionRole } from "./auth/AuthContext";
 import { LoginPage } from "./auth/LoginPage";
 import { Navigation } from "./modules/Navigation";
+import { LeaderboardPage } from "./pages/LeaderboardPage";
 import { ParentPage } from "./pages/ParentPage";
 import { SettingsPage } from "./pages/SettingsPage";
 import { StudentHomePage } from "./pages/StudentHomePage";
 import { StudentHomeworkPage } from "./pages/StudentHomeworkPage";
 import { StudentPracticePage } from "./pages/StudentPracticePage";
 import { TeacherHomePage } from "./pages/TeacherHomePage";
+import { TeacherStudentsPage } from "./pages/TeacherStudentsPage";
 import { TeacherHomeworkPage } from "./pages/TeacherHomeworkPage";
 import { TeacherPlansPage } from "./pages/TeacherPlansPage";
 
@@ -53,11 +55,15 @@ const Shell = () => {
       title={manifest.title}
       sidebar={<Navigation />}
     >
+      <div className="eduflow:h-full eduflow:min-h-0 eduflow:overflow-y-auto eduflow:bg-edu-bg">
+        <div className="eduflow:mx-auto eduflow:w-full eduflow:max-w-7xl eduflow:p-5 eduflow:md:p-6">
       <Routes>
         <Route index element={<RoleHome />} />
         <Route path="teacher" element={<RoleGate role="teacher"><TeacherHomePage /></RoleGate>} />
         <Route path="teacher/homework" element={<RoleGate role="teacher"><TeacherHomeworkPage /></RoleGate>} />
         <Route path="teacher/plans" element={<RoleGate role="teacher"><TeacherPlansPage /></RoleGate>} />
+        <Route path="teacher/students" element={<RoleGate role="teacher"><TeacherStudentsPage /></RoleGate>} />
+        <Route path="leaderboard" element={<LeaderboardPage />} />
         <Route path="student" element={<RoleGate role="student"><StudentHomePage /></RoleGate>} />
         <Route path="student/homework" element={<RoleGate role="student"><StudentHomeworkPage /></RoleGate>} />
         <Route path="student/practice" element={<RoleGate role="student"><StudentPracticePage /></RoleGate>} />
@@ -65,6 +71,8 @@ const Shell = () => {
         <Route path="settings" element={<SettingsPage />} />
         <Route path="*" element={<RoleHome />} />
       </Routes>
+        </div>
+      </div>
     </AppLayout>
   );
 };

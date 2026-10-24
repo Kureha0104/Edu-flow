@@ -26,17 +26,21 @@ installed only so TypeScript and Rspack can resolve the imports.
 
 A role-based Mongolian homework app with its own login screen:
 
-- **Teacher** — dashboard, assign homework, review photo submissions with
-  mock AI feedback, and move lesson plans through draft → review → approved.
-- **Student** — only their own screen: streak/XP/level, homework list, photo
-  upload + AI check, and an adaptive quiz.
-- **Parent** — only their own children: completion, AI feedback, streaks and a
-  dummy SMS inbox.
+- **Teacher** — dashboard, square photo grid with a blur lightbox, editable
+  parent SMS, grade override, lesson plans with PDF/DOC/DOCX attachments, and a
+  students overview showing missed work.
+- **Student** — only their own screen: streak, homework grade, homework list,
+  photo upload + AI check, adaptive quiz and a public/private leaderboard
+  setting.
+- **Parent** — only their own children: completion, homework grade, AI feedback,
+  streaks and SMS history.
 - **Adaptive quiz** — picks the student's weakest concept, builds five
   questions, raises difficulty after consecutive correct answers, updates
-  mastery and awards XP on completion.
-- **Settings** — profile, SMS preference, language (Mongolian), demo reset and
-  plugin info.
+  mastery and keeps the streak.
+- **Leaderboard** — ranked by approved homework grade, with student-controlled
+  visibility; private students stay visible to teachers and parents only.
+- **Settings** — profile, SMS preference, language, leaderboard privacy,
+  AI/plugin status, demo reset.
 - **Seeded demo school** — Сара багш, Ану/Билгүүн/Сарнай, Хатагтай Туяа, 5А
   анги, homework, submissions, lesson plans and weak-concept maps.
 
@@ -55,11 +59,43 @@ the local owner, so backend permissions are not yet scoped to the demo account.
 Real school SSO/role mapping is the next step. The UI enforces separation:
 students only fetch their own member ID, parents only their own children.
 
-Photo review and SMS are simulated but the flow is real:
-`upload → AI-style score → teacher approval → streak/XP update → parent record`.
-Replace `runMockAi` in [api/src/graphql/schema.ts](api/src/graphql/schema.ts)
-with a vision model, and `notifyParent` with Twilio, without changing the
-workflow.
+Photo review and SMS work in demo mode out of the box:
+`upload → Gemma/mock check → teacher grade → streak update → parent record`.
+Add the provider keys below to switch to the real integrations.
+
+## AI checking: Gemma 4
+
+1. Create a key at [aistudio.google.com/apikey](https://aistudio.google.com/apikey).
+2. Add it to `edu-flow/.env`:
+   ```ini
+   GEMINI_API_KEY=your_key
+   GEMMA_MODEL=gemma-4-26b-a4b-it
+   ```
+3. Restart the plugin API (`npm run dev:api`).
+
+The API sends the uploaded image inline to Gemma 4’s `generateContent`
+endpoint, asks for strict JSON (`score`, `feedback`, `strengths`,
+`improvements`), and falls back to the deterministic demo checker on errors.
+Settings shows whether Gemma is configured. Supported models:
+[`gemma-4-31b-it`, `gemma-4-26b-a4b-it`](https://ai.google.dev/gemma/docs/core/gemma_on_gemini_api).
+
+## Parent SMS: Twilio
+
+The SMS dialog is real; without credentials it records a demo delivery.
+
+```ini
+SMS_PROVIDER=twilio
+TWILIO_ACCOUNT_SID=AC...
+TWILIO_AUTH_TOKEN=...
+TWILIO_FROM=+1555... # or an approved alphanumeric sender ID
+```
+
+Restart the API. For Mongolia, use an alphanumeric sender ID / registered
+sender and check Twilio’s per-country requirements before a pilot. Twilio’s
+Mongolia page currently lists **~$0.3541 per outbound SMS** for international
+numbers plus carrier/registration costs; confirm the live price in the console.
+If sender approval takes too long, a Telegram bot is a faster free alternative
+for the same notification record.
 
 ## Demo walkthrough
 

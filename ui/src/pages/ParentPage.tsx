@@ -11,6 +11,7 @@ import { useState } from "react";
 import { Button, cn } from "erxes-ui";
 import { NOTIFY_PARENT } from "~/graphql";
 import { useAuth } from "../auth/AuthContext";
+import { gradeForStudent } from "../modules/eduflow/grades";
 import { useEduflowDemo } from "../modules/eduflow/useDemo";
 import {
   AiNotice,
@@ -33,11 +34,13 @@ const ChildSummary = ({
   homeworks,
   approved,
   pending,
+  grade,
 }: {
   child: Member;
   homeworks: Demo["homeworks"];
   approved: number;
   pending: number;
+  grade: number;
 }) => (
   <div className="eduflow:rounded-2xl eduflow:border eduflow:border-edu-lav/25 eduflow:bg-gradient-to-br eduflow:from-edu-purple/25 eduflow:via-edu-card eduflow:to-edu-card eduflow:p-4">
     <div className="eduflow:flex eduflow:items-center eduflow:gap-3">
@@ -75,10 +78,10 @@ const ChildSummary = ({
       </div>
       <div className="eduflow:rounded-xl eduflow:bg-edu-bg/40 eduflow:px-3 eduflow:py-2">
         <p className="eduflow:text-[10px] eduflow:uppercase eduflow:tracking-wider eduflow:text-edu-text">
-          Оноо
+          Дүн
         </p>
         <p className="eduflow:text-lg eduflow:font-semibold eduflow:text-edu-lav">
-          {child.points} XP
+          {grade}%
         </p>
       </div>
     </div>
@@ -142,13 +145,12 @@ export const ParentPage = () => {
   const approved = childSubmissions.filter(
     (submission) => submission.status === "approved",
   ).length;
-  const pending = childSubmissions.filter(
-    (submission) => submission.status !== "approved",
-  ).length;
+  const pending = Math.max(0, demo.homeworks.length - approved);
   const notifications = demo.notifications.filter(
     (notification) => notification.studentId === child._id,
   );
   const latestSubmission = childSubmissions[0];
+  const grade = gradeForStudent(child._id, demo.homeworks, demo.submissions);
 
   const sendTestSms = async () => {
     if (!latestSubmission) {
@@ -207,6 +209,7 @@ export const ParentPage = () => {
             homeworks={demo.homeworks}
             approved={approved}
             pending={pending}
+            grade={grade}
           />
 
           <SectionCard
@@ -255,7 +258,11 @@ export const ParentPage = () => {
                         {formatDate(notification.createdAt)}
                       </span>
                       <span className="eduflow:rounded-full eduflow:bg-edu-cyan/10 eduflow:px-2 eduflow:py-0.5 eduflow:text-edu-cyan">
-                        илгээсэн (жишээ)
+                        {notification.status === "sent"
+                          ? "илгээгдсэн"
+                          : notification.status === "failed"
+                            ? "алдаа"
+                            : "жишээ"}
                       </span>
                     </div>
                   </div>

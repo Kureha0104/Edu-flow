@@ -285,8 +285,8 @@ export const StudentPracticePage = () => {
                   Дасгал дууслаа!
                 </h3>
                 <p className="eduflow:mt-1 eduflow:text-xs eduflow:text-edu-text">
-                  {activeQuiz.correctCount}/{activeQuiz.totalQuestions} зөв ·{" "}
-                  {activeQuiz.xpEarned} XP
+                  {activeQuiz.correctCount}/{activeQuiz.totalQuestions} зөв
+                  хариулт
                 </p>
                 <div className="eduflow:mt-3 eduflow:flex eduflow:justify-center eduflow:gap-2">
                   <Button type="button" size="sm" disabled={starting} onClick={start}>
@@ -365,8 +365,7 @@ export const StudentPracticePage = () => {
                         {item.topic}
                       </p>
                       <p className="eduflow:text-[10px] eduflow:text-edu-text">
-                        {item.correctCount}/{item.totalQuestions} зөв ·{" "}
-                        {item.xpEarned} XP
+                        {item.correctCount}/{item.totalQuestions} зөв хариулт
                       </p>
                     </div>
                     <span className="eduflow:text-[10px] eduflow:text-edu-text">

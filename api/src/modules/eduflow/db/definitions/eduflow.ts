@@ -17,6 +17,7 @@ export interface IEduflowMember {
   grade?: string;
   avatar?: string;
   parentId?: string;
+  leaderboardVisible: boolean;
   streak: number;
   longestStreak: number;
   points: number;
@@ -39,6 +40,7 @@ export const eduflowMemberSchema = schemaWrapper(
     grade: String,
     avatar: String,
     parentId: String,
+    leaderboardVisible: { type: Boolean, default: true },
     streak: { type: Number, default: 0 },
     longestStreak: { type: Number, default: 0 },
     points: { type: Number, default: 0 },
@@ -110,6 +112,9 @@ export interface IEduflowSubmission {
   status: EduflowSubmissionStatus;
   aiFeedback?: string;
   aiScore?: number;
+  aiProvider?: string;
+  earnedPoints: number;
+  gradePercent: number;
   submittedAt: Date;
   completedAt?: Date;
 }
@@ -130,6 +135,9 @@ export const eduflowSubmissionSchema = schemaWrapper(
     },
     aiFeedback: String,
     aiScore: Number,
+    aiProvider: String,
+    earnedPoints: { type: Number, default: 0 },
+    gradePercent: { type: Number, default: 0 },
     submittedAt: { type: Date, default: Date.now },
     completedAt: Date,
   }),
@@ -138,6 +146,23 @@ export const eduflowSubmissionSchema = schemaWrapper(
 eduflowSubmissionSchema.index(
   { homeworkId: 1, studentId: 1 },
   { unique: true },
+);
+
+export interface IEduflowAttachment {
+  name: string;
+  mimeType: string;
+  size: number;
+  data: string;
+}
+
+const attachmentSchema = new Schema(
+  {
+    name: { type: String, required: true },
+    mimeType: { type: String, required: true },
+    size: { type: Number, required: true },
+    data: { type: String, required: true },
+  },
+  { _id: false },
 );
 
 export interface IEduflowLessonPlan {
@@ -149,6 +174,7 @@ export interface IEduflowLessonPlan {
   content?: string;
   materials?: string;
   assessment?: string;
+  attachments: IEduflowAttachment[];
   status: EduflowLessonPlanStatus;
   reviewNote?: string;
   approvedAt?: Date;
@@ -168,6 +194,7 @@ export const eduflowLessonPlanSchema = schemaWrapper(
     content: String,
     materials: String,
     assessment: String,
+    attachments: { type: [attachmentSchema], default: [] },
     status: {
       type: String,
       enum: ["draft", "review", "approved"],
@@ -185,7 +212,9 @@ export interface IEduflowNotification {
   homeworkId?: string;
   channel: "sms";
   message: string;
-  status: "queued" | "sent_dummy";
+  status: "queued" | "sent" | "sent_dummy" | "failed";
+  providerId?: string;
+  error?: string;
   createdAt: Date;
 }
 
@@ -201,9 +230,11 @@ export const eduflowNotificationSchema = schemaWrapper(
     message: { type: String, required: true },
     status: {
       type: String,
-      enum: ["queued", "sent_dummy"],
+      enum: ["queued", "sent", "sent_dummy", "failed"],
       default: "queued",
     },
+    providerId: String,
+    error: String,
     createdAt: { type: Date, default: Date.now },
   }),
 );

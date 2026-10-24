@@ -12,8 +12,10 @@ import type {
   IEduflowQuizQuestion,
   IEduflowSubmissionDocument,
 } from "../modules/eduflow/db/definitions/eduflow.ts";
+import { aiInfo, checkHomeworkImage } from "../modules/eduflow/ai.ts";
 import { buildQuizQuestions, pickQuestion } from "../modules/eduflow/quizBank.ts";
 import { ensureDemoData } from "../modules/eduflow/seed.ts";
+import { sendParentSms } from "../modules/eduflow/sms.ts";
 import {
   DEMO_RESET,
   HOMEWORK_MANAGE,
@@ -42,6 +44,7 @@ export const typeDefs = gql`
     grade: String
     avatar: String
     parentId: String
+    leaderboardVisible: Boolean!
     streak: Int!
     longestStreak: Int!
     points: Int!
@@ -82,10 +85,27 @@ export const typeDefs = gql`
     status: String!
     aiFeedback: String
     aiScore: Int
+    aiProvider: String
+    earnedPoints: Int!
+    gradePercent: Int!
     submittedAt: String
     completedAt: String
     homework: EduflowHomework
     student: EduflowMember
+  }
+
+  type EduflowAttachment {
+    name: String!
+    mimeType: String!
+    size: Int!
+    data: String!
+  }
+
+  input EduflowAttachmentInput {
+    name: String!
+    mimeType: String!
+    size: Int!
+    data: String!
   }
 
   type EduflowLessonPlan {
@@ -98,6 +118,7 @@ export const typeDefs = gql`
     content: String
     materials: String
     assessment: String
+    attachments: [EduflowAttachment!]!
     status: String!
     reviewNote: String
     approvedAt: String
@@ -113,6 +134,8 @@ export const typeDefs = gql`
     channel: String!
     message: String!
     status: String!
+    providerId: String
+    error: String
     createdAt: String
     parent: EduflowMember
     student: EduflowMember
@@ -124,6 +147,22 @@ export const typeDefs = gql`
     pendingReviews: Int!
     approvedToday: Int!
     averageStreak: Int!
+    homeworkGrade: Int!
+  }
+
+  type EduflowLeaderboardEntry {
+    rank: Int!
+    member: EduflowMember!
+    grade: Int!
+    streak: Int!
+    approved: Int!
+    total: Int!
+  }
+
+  type EduflowAiInfo {
+    configured: Boolean!
+    provider: String!
+    model: String!
   }
 
   type EduflowDemo {
@@ -197,6 +236,8 @@ export const typeDefs = gql`
   type Query {
     eduflowDemo(role: String!, memberId: String): EduflowDemo!
     eduflowPractice(studentId: String!): EduflowPractice!
+    eduflowLeaderboard: [EduflowLeaderboardEntry!]!
+    eduflowAiInfo: EduflowAiInfo!
     eduflowMembers(role: String): [EduflowMember!]!
     eduflowHomeworks(classId: String): [EduflowHomework!]!
     eduflowSubmissions(homeworkId: String, studentId: String): [EduflowSubmission!]!
@@ -222,8 +263,12 @@ export const typeDefs = gql`
       submissionId: String!
       decision: String!
       feedback: String
+      gradePercent: Int
     ): EduflowSubmission!
-    eduflowNotifyParent(submissionId: String!): EduflowNotification!
+    eduflowNotifyParent(
+      submissionId: String!
+      message: String
+    ): EduflowNotification!
     eduflowCreateLessonPlan(
       title: String!
       subject: String!
@@ -232,7 +277,12 @@ export const typeDefs = gql`
       materials: String
       assessment: String
       classId: String
+      attachments: [EduflowAttachmentInput!]
     ): EduflowLessonPlan!
+    eduflowSetLeaderboardVisibility(
+      studentId: String!
+      visible: Boolean!
+    ): EduflowMember!
     eduflowUpdateLessonPlanStatus(
       planId: String!
       status: String!
@@ -285,25 +335,37 @@ const parseDueDate = (value: string) => {
   return date;
 };
 
-type AiResult = { score: number; approved: boolean; feedback: string };
+const gradeForStudent = (
+  studentId: string,
+  homeworks: IEduflowHomeworkDocument[],
+  submissions: IEduflowSubmissionDocument[],
+) => {
+  const total = homeworks.reduce((sum, homework) => sum + homework.points, 0);
+  const earned = submissions
+    .filter(
+      (submission) =>
+        submission.studentId === studentId && submission.status === "approved",
+    )
+    .reduce((sum, submission) => sum + (submission.earnedPoints ?? 0), 0);
 
-// The dummy AI: deterministic, instant, and clearly marked as a mock in the UI.
-// Swap this for a vision model without changing the submission workflow.
-const runMockAi = (imageData: string): AiResult => {
-  if (!imageData || imageData.length < 100) {
-    fail("Upload a photo of the completed work first.");
+  return total > 0 ? Math.round((earned / total) * 100) : 0;
+};
+
+const gradeForGroup = (
+  studentIds: string[],
+  homeworks: IEduflowHomeworkDocument[],
+  submissions: IEduflowSubmissionDocument[],
+) => {
+  if (studentIds.length === 0) {
+    return 0;
   }
 
-  const score = 74 + (imageData.length % 22);
-  const approved = score >= 80;
+  const total = studentIds.reduce(
+    (sum, studentId) => sum + gradeForStudent(studentId, homeworks, submissions),
+    0,
+  );
 
-  return {
-    score,
-    approved,
-    feedback: approved
-      ? "I can see the completed working. Every question is answered and the steps are readable. Nice work — keep the streak going!"
-      : "I can see most of the work, but one question looks unfinished. Check the last step, correct it, and submit a new photo.",
-  };
+  return Math.round(total / studentIds.length);
 };
 
 const notifyParent = async (
@@ -317,13 +379,23 @@ const notifyParent = async (
     return null;
   }
 
+  const parent = await models.EduflowMembers.findById(student.parentId);
+  if (!parent?.phone) {
+    return null;
+  }
+
+  const message = `Edu Flow: ${student.name} "${homework.title}" даалгаврыг ${score}% гүйцэтгэж, ${streak} өдрийн цуврал үргэлжлүүллээ. 🔥`;
+  const result = await sendParentSms(parent.phone, message);
+
   return models.EduflowNotifications.create({
-    parentId: student.parentId,
+    parentId: String(parent._id),
     studentId: String(student._id),
     homeworkId: String(homework._id),
     channel: "sms",
-    message: `Edu Flow: ${student.name} "${homework.title}" даалгаврыг ${score}% гүйцэтгэж, ${streak} өдрийн цуврал үргэлжлүүллээ. 🔥`,
-    status: "sent_dummy",
+    message,
+    status: result.status,
+    providerId: result.providerId,
+    error: result.error,
     createdAt: new Date(),
   });
 };
@@ -381,7 +453,7 @@ const applyApproval = async (
     models,
     student,
     homework,
-    submission.aiScore ?? 100,
+    submission.gradePercent ?? submission.aiScore ?? 100,
     streak,
   );
 
@@ -520,6 +592,12 @@ export const resolvers = {
             )
           : 0;
 
+      const homeworkGrade = gradeForGroup(
+        visibleStudents.map((student) => String(student._id)),
+        visibleHomeworks,
+        visibleSubmissions,
+      );
+
       return {
         role: normalizedRole,
         member,
@@ -546,6 +624,7 @@ export const resolvers = {
               startOfDay(submission.completedAt) === startOfDay(new Date()),
           ).length,
           averageStreak,
+          homeworkGrade,
         },
       };
     },
@@ -579,6 +658,55 @@ export const resolvers = {
       ]);
 
       return { member, concepts, activeQuiz, completedQuizzes };
+    },
+
+    eduflowLeaderboard: async (
+      _parent: unknown,
+      _args: unknown,
+      { models, user, checkPermission }: Context,
+    ) => {
+      requireUser(user);
+      await checkPermission(HOMEWORK_READ);
+      await ensureDemoData(models);
+
+      const [members, homeworks, submissions] = await Promise.all([
+        models.EduflowMembers.find({ role: "student" }).sort({ name: 1 }),
+        models.EduflowHomework.find(),
+        models.EduflowSubmissions.find({ status: "approved" }),
+      ]);
+
+      const entries = members
+        .filter((member) => member.leaderboardVisible)
+        .map((member) => {
+          const studentId = String(member._id);
+          return {
+            member,
+            grade: gradeForStudent(studentId, homeworks, submissions),
+            streak: member.streak,
+            approved: submissions.filter(
+              (submission) => submission.studentId === studentId,
+            ).length,
+            total: homeworks.length,
+          };
+        })
+        .sort(
+          (a, b) =>
+            b.grade - a.grade ||
+            b.streak - a.streak ||
+            a.member.name.localeCompare(b.member.name),
+        )
+        .map((entry, index) => ({ ...entry, rank: index + 1 }));
+
+      return entries;
+    },
+
+    eduflowAiInfo: async (
+      _parent: unknown,
+      _args: unknown,
+      { user }: Context,
+    ) => {
+      requireUser(user);
+      return aiInfo();
     },
 
     eduflowMembers: async (
@@ -690,7 +818,7 @@ export const resolvers = {
       await checkPermission(SUBMISSION_CREATE);
       await ensureDemoData(models);
 
-      required<IEduflowHomeworkDocument>(
+      const homework = required<IEduflowHomeworkDocument>(
         await models.EduflowHomework.findById(homeworkId),
         "Homework not found.",
       );
@@ -706,7 +834,17 @@ export const resolvers = {
         fail("Student not found.", "NOT_FOUND");
       }
 
-      const ai = runMockAi(imageData);
+      const ai = await checkHomeworkImage({
+        title: homework.title,
+        subject: homework.subject,
+        description: homework.description,
+        imageData,
+      });
+      const approved = ai.score >= 80;
+      const gradePercent = approved ? ai.score : 0;
+      const earnedPoints = approved
+        ? Math.round((homework.points * ai.score) / 100)
+        : 0;
       const existing = await models.EduflowSubmissions.findOne({
         homeworkId,
         studentId: String(student._id),
@@ -718,11 +856,14 @@ export const resolvers = {
           $set: {
             imageData,
             note,
-            status: ai.approved ? "approved" : "needs_work",
+            status: approved ? "approved" : "needs_work",
             aiScore: ai.score,
+            aiProvider: ai.provider,
             aiFeedback: ai.feedback,
+            earnedPoints,
+            gradePercent,
             submittedAt: new Date(),
-            completedAt: ai.approved ? new Date() : null,
+            completedAt: approved ? new Date() : null,
           },
         },
         { upsert: true, new: true, setDefaultsOnInsert: true },
@@ -732,7 +873,7 @@ export const resolvers = {
         fail("Could not save the submission.", "INTERNAL_SERVER_ERROR");
       }
 
-      if (ai.approved && existing?.status !== "approved") {
+      if (approved && existing?.status !== "approved") {
         return applyApproval(models, submission);
       }
 
@@ -745,7 +886,13 @@ export const resolvers = {
         submissionId,
         decision,
         feedback,
-      }: { submissionId: string; decision: string; feedback?: string },
+        gradePercent,
+      }: {
+        submissionId: string;
+        decision: string;
+        feedback?: string;
+        gradePercent?: number;
+      },
       { models, user, checkPermission }: Context,
     ) => {
       requireUser(user);
@@ -755,9 +902,19 @@ export const resolvers = {
         await models.EduflowSubmissions.findById(submissionId),
         "Submission not found.",
       );
+      const homework = required<IEduflowHomeworkDocument>(
+        await models.EduflowHomework.findById(submission.homeworkId),
+        "Homework not found.",
+      );
 
       const status = decision === "approved" ? "approved" : "needs_work";
       const wasApproved = submission.status === "approved";
+      const grade = Math.max(
+        0,
+        Math.min(100, Math.round(gradePercent ?? submission.aiScore ?? 100)),
+      );
+      const earnedPoints =
+        status === "approved" ? Math.round((homework.points * grade) / 100) : 0;
 
       const updated = required<IEduflowSubmissionDocument>(
         await models.EduflowSubmissions.findByIdAndUpdate(
@@ -766,6 +923,8 @@ export const resolvers = {
             $set: {
               status,
               aiFeedback: feedback ?? submission.aiFeedback,
+              gradePercent: status === "approved" ? grade : 0,
+              earnedPoints,
               completedAt: status === "approved" ? new Date() : null,
             },
           },
@@ -783,7 +942,10 @@ export const resolvers = {
 
     eduflowNotifyParent: async (
       _parent: unknown,
-      { submissionId }: { submissionId: string },
+      {
+        submissionId,
+        message,
+      }: { submissionId: string; message?: string },
       { models, user, checkPermission }: Context,
     ) => {
       requireUser(user);
@@ -805,14 +967,28 @@ export const resolvers = {
         student.parentId,
         "This student has no parent contact on file.",
       );
+      const parent = required<IEduflowMemberDocument>(
+        await models.EduflowMembers.findById(parentId),
+        "Parent not found.",
+      );
+      const phone = required<string>(
+        parent.phone,
+        "This parent has no phone number on file.",
+      );
+      const body =
+        message?.trim().slice(0, 1000) ||
+        `Edu Flow: ${student.name} "${homework.title}" даалгавраа илгээлээ. Сүүлийн дүн: ${submission.gradePercent ?? submission.aiScore ?? "—"}%.`;
+      const result = await sendParentSms(phone, body);
 
       return models.EduflowNotifications.create({
         parentId,
         studentId: String(student._id),
         homeworkId: String(homework._id),
         channel: "sms",
-        message: `Edu Flow (жишээ SMS): ${student.name} "${homework.title}" даалгавраа илгээлээ. Сүүлийн дүн: ${submission.aiScore ?? "—"}%.`,
-        status: "sent_dummy",
+        message: body,
+        status: result.status,
+        providerId: result.providerId,
+        error: result.error,
         createdAt: new Date(),
       });
     },
@@ -827,6 +1003,7 @@ export const resolvers = {
         materials,
         assessment,
         classId,
+        attachments,
       }: {
         title: string;
         subject: string;
@@ -835,6 +1012,12 @@ export const resolvers = {
         materials?: string;
         assessment?: string;
         classId?: string;
+        attachments?: {
+          name: string;
+          mimeType: string;
+          size: number;
+          data: string;
+        }[];
       },
       { models, user, checkPermission }: Context,
     ) => {
@@ -842,6 +1025,28 @@ export const resolvers = {
       await checkPermission(LESSON_PLAN_MANAGE);
       await ensureDemoData(models);
       const classroom = await findClass(models, classId);
+      const allowed = [
+        "application/pdf",
+        "application/msword",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      ];
+      const safeAttachments = (attachments ?? []).map((attachment) => {
+        if (!allowed.includes(attachment.mimeType)) {
+          fail("Зөвхөн PDF, DOC, DOCX файл хавсаргана уу.");
+        }
+        if (attachment.size > 3 * 1024 * 1024) {
+          fail("Файл бүр 3MB-аас бага байх ёстой.");
+        }
+        if (!attachment.data.startsWith("data:")) {
+          fail("Файлын өгөгдөл буруу байна.");
+        }
+        return {
+          name: attachment.name.slice(0, 160),
+          mimeType: attachment.mimeType,
+          size: attachment.size,
+          data: attachment.data,
+        };
+      });
 
       return models.EduflowLessonPlans.create({
         classId: String(classroom._id),
@@ -852,6 +1057,7 @@ export const resolvers = {
         content,
         materials,
         assessment,
+        attachments: safeAttachments,
         status: "draft",
         createdAt: new Date(),
       });
@@ -1116,6 +1322,33 @@ export const resolvers = {
 
       return true;
     },
+
+    eduflowSetLeaderboardVisibility: async (
+      _parent: unknown,
+      { studentId, visible }: { studentId: string; visible: boolean },
+      { models, user, checkPermission }: Context,
+    ) => {
+      requireUser(user);
+      await checkPermission(HOMEWORK_READ);
+
+      const member = required<IEduflowMemberDocument>(
+        await models.EduflowMembers.findById(studentId),
+        "Сурагч олдсонгүй.",
+      );
+
+      if (member.role !== "student") {
+        fail("Зөвхөн сурагчийн тохиргоог өөрчилнө.", "BAD_USER_INPUT");
+      }
+
+      return required<IEduflowMemberDocument>(
+        await models.EduflowMembers.findByIdAndUpdate(
+          studentId,
+          { $set: { leaderboardVisible: visible } },
+          { new: true },
+        ),
+        "Сурагч олдсонгүй.",
+      );
+    },
   },
 
   EduflowClass: {
@@ -1170,6 +1403,10 @@ export const resolvers = {
   },
 
   EduflowSubmission: {
+    earnedPoints: (parent: IEduflowSubmissionDocument) =>
+      parent.earnedPoints ?? 0,
+    gradePercent: (parent: IEduflowSubmissionDocument) =>
+      parent.gradePercent ?? 0,
     homework: async (
       parent: IEduflowSubmissionDocument,
       _args: unknown,
@@ -1187,6 +1424,8 @@ export const resolvers = {
   },
 
   EduflowLessonPlan: {
+    attachments: (parent: IEduflowLessonPlanDocument) =>
+      parent.attachments ?? [],
     teacher: async (
       parent: IEduflowLessonPlanDocument,
       _args: unknown,
@@ -1216,6 +1455,8 @@ export const resolvers = {
   EduflowMember: {
     lastCompletedDate: (parent: IEduflowMemberDocument) =>
       parent.lastCompletedDate?.toISOString() ?? null,
+    leaderboardVisible: (parent: IEduflowMemberDocument) =>
+      parent.leaderboardVisible !== false,
   },
 
   EduflowConcept: {

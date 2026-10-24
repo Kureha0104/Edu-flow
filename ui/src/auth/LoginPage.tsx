@@ -193,7 +193,7 @@ export const LoginPage = () => {
               <Feature
                 icon={IconFlame}
                 title="Зөвхөн сурагчид цуврал"
-                description="Өдөр бүр даалгавраа хийж XP, түвшин, цувралаа өсгөнө."
+                description="Өдөр бүр даалгавраа хийж дүн, цувралаа өсгөнө."
               />
               <Feature
                 icon={IconUsers}

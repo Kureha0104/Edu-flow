@@ -47,3 +47,17 @@ export const fileToCompressedDataUrl = (file: File): Promise<string> =>
 
     reader.readAsDataURL(file);
   });
+
+export const fileToDataUrl = (file: File): Promise<string> =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error("Файлыг уншиж чадсангүй."));
+    reader.onload = () => {
+      if (typeof reader.result === "string") {
+        resolve(reader.result);
+      } else {
+        reject(new Error("Файлыг уншиж чадсангүй."));
+      }
+    };
+    reader.readAsDataURL(file);
+  });

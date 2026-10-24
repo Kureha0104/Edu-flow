@@ -7,6 +7,7 @@ import {
   IconSchool,
   IconSettings,
   IconSparkles,
+  IconTrophy,
   IconUsers,
 } from "@tabler/icons-react";
 // Root import on purpose: core-ui shares `erxes-ui` as a Module Federation
@@ -37,6 +38,16 @@ const NAV_ITEMS: Record<
       icon: IconClipboardList,
       path: "/teacher/plans",
     },
+    {
+      name: "Сурагчид",
+      icon: IconUsers,
+      path: "/teacher/students",
+    },
+    {
+      name: "Тэргүүлэгчид",
+      icon: IconTrophy,
+      path: "/leaderboard",
+    },
   ],
   student: [
     {
@@ -54,12 +65,22 @@ const NAV_ITEMS: Record<
       icon: IconSparkles,
       path: "/student/practice",
     },
+    {
+      name: "Тэргүүлэгчид",
+      icon: IconTrophy,
+      path: "/leaderboard",
+    },
   ],
   parent: [
     {
       name: "Хүүхдийн явц",
       icon: IconUsers,
       path: "/parent",
+    },
+    {
+      name: "Тэргүүлэгчид",
+      icon: IconTrophy,
+      path: "/leaderboard",
     },
   ],
 };

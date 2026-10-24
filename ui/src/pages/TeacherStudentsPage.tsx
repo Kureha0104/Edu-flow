@@ -1,8 +1,19 @@
-import { IconAlertTriangle, IconCheck, IconFlame, IconTrophy } from "@tabler/icons-react";
+import {
+  IconAlertTriangle,
+  IconCheck,
+  IconEdit,
+  IconFlame,
+  IconPhone,
+  IconTrophy,
+} from "@tabler/icons-react";
+import { useState } from "react";
 import { Link } from "react-router";
-import { Button } from "erxes-ui";
+import { Button, Input } from "erxes-ui";
 import manifest from "../../../erxes.json" with { type: "json" };
+import { useMutation } from "@apollo/client";
 import { studentHomeworkStats } from "../modules/eduflow/grades";
+import { SET_PARENT_PHONE } from "~/graphql";
+import { Modal } from "../modules/eduflow/Modal";
 import { useEduflowDemo } from "../modules/eduflow/useDemo";
 import {
   Avatar,
@@ -13,12 +24,17 @@ import {
   SectionCard,
   StatCard,
   formatDate,
+  type Member,
 } from "../modules/eduflow/ui";
 
 const base = `/${manifest.ui.path}`;
 
 export const TeacherStudentsPage = () => {
   const { demo, loading, error, refetch } = useEduflowDemo("teacher");
+  const [phoneStudent, setPhoneStudent] = useState<Member | null>(null);
+  const [phone, setPhone] = useState("");
+  const [phoneError, setPhoneError] = useState<string | null>(null);
+  const [savePhone, { loading: savingPhone }] = useMutation(SET_PARENT_PHONE);
 
   if (loading && !demo) {
     return <div className="eduflow:h-40 eduflow:animate-pulse eduflow:rounded-2xl eduflow:bg-edu-card" />;
@@ -32,6 +48,26 @@ export const TeacherStudentsPage = () => {
       />
     );
   }
+
+  const openPhone = (student: Member) => {
+    setPhoneStudent(student);
+    setPhone(student.parentPhone ?? "");
+    setPhoneError(null);
+  };
+
+  const saveParentPhone = async () => {
+    if (!phoneStudent) return;
+    setPhoneError(null);
+    try {
+      await savePhone({ variables: { studentId: phoneStudent._id, phone } });
+      setPhoneStudent(null);
+      await refetch();
+    } catch (cause) {
+      setPhoneError(
+        cause instanceof Error ? cause.message : "Утасны дугаарыг хадгалж чадсангүй.",
+      );
+    }
+  };
 
   const rows = demo.students.map((student) => ({
     student,
@@ -100,6 +136,7 @@ export const TeacherStudentsPage = () => {
                   <th className="eduflow:px-3 eduflow:py-1">Цуврал</th>
                   <th className="eduflow:px-3 eduflow:py-1">Дууссан</th>
                   <th className="eduflow:px-3 eduflow:py-1">Хоцорсон</th>
+                  <th className="eduflow:px-3 eduflow:py-1">Эцэг эхийн утас</th>
                   <th className="eduflow:px-3 eduflow:py-1">Сүүлийн илгээлт</th>
                   <th className="eduflow:px-3 eduflow:py-1">Тэргүүлэгч</th>
                 </tr>
@@ -111,7 +148,7 @@ export const TeacherStudentsPage = () => {
                       <div className="eduflow:flex eduflow:items-center eduflow:gap-2">
                         <Avatar name={student.name} size="sm" />
                         <div>
-                          <p className="eduflow:text-xs eduflow:font-medium eduflow:text-white">
+                          <p className="eduflow:text-xs eduflow:font-medium eduflow:text-edu-ink">
                             {student.name}
                           </p>
                           <p className="eduflow:text-[10px] eduflow:text-edu-text">
@@ -154,6 +191,17 @@ export const TeacherStudentsPage = () => {
                         {stats.missed} хоцорсон
                       </span>
                     </td>
+                    <td className="eduflow:px-3 eduflow:py-2.5">
+                      <button
+                        type="button"
+                        onClick={() => openPhone(student)}
+                        className="eduflow:flex eduflow:items-center eduflow:gap-1.5 eduflow:text-[10px] eduflow:text-edu-text hover:eduflow:text-edu-lav"
+                      >
+                        <IconPhone className="eduflow:size-3.5" />
+                        {student.parentPhone ?? "Утас нэмэх"}
+                        <IconEdit className="eduflow:size-3" />
+                      </button>
+                    </td>
                     <td className="eduflow:px-3 eduflow:py-2.5 eduflow:text-[10px] eduflow:text-edu-text">
                       {formatDate(stats.latest)}
                     </td>
@@ -175,6 +223,46 @@ export const TeacherStudentsPage = () => {
           </div>
         )}
       </SectionCard>
+
+      <Modal
+        open={Boolean(phoneStudent)}
+        onClose={() => setPhoneStudent(null)}
+        title="Эцэг эхийн утас"
+        className="eduflow:max-w-md"
+      >
+        <div className="eduflow:grid eduflow:gap-3">
+          <p className="eduflow:text-[11px] eduflow:text-edu-text">
+            {phoneStudent?.name} сурагчийн эцэг эхийн утас. SMS мэдэгдэл энэ
+            дугаар руу явна.
+          </p>
+          <Input
+            value={phone}
+            placeholder="+97699112233"
+            onChange={(event) => setPhone(event.target.value)}
+          />
+          {phoneError && (
+            <p className="eduflow:text-[11px] eduflow:text-[#a33a20]">{phoneError}</p>
+          )}
+          <div className="eduflow:flex eduflow:justify-end eduflow:gap-2">
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              onClick={() => setPhoneStudent(null)}
+            >
+              Цуцлах
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              disabled={savingPhone}
+              onClick={() => void saveParentPhone()}
+            >
+              {savingPhone ? "Хадгалж байна…" : "Хадгалах"}
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 };

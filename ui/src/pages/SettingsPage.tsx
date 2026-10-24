@@ -128,7 +128,7 @@ export const SettingsPage = () => {
               <IconUser className="eduflow:size-7" />
             </span>
             <div>
-              <p className="eduflow:text-sm eduflow:font-semibold eduflow:text-white">
+              <p className="eduflow:text-sm eduflow:font-semibold eduflow:text-edu-ink">
                 {member.name}
               </p>
               <p className="eduflow:text-[11px] eduflow:text-edu-text">
@@ -145,15 +145,15 @@ export const SettingsPage = () => {
           <div className="eduflow:mt-4 eduflow:grid eduflow:gap-2 eduflow:text-[11px]">
             <div className="eduflow:flex eduflow:justify-between eduflow:border-b eduflow:border-edu-border eduflow:pb-2">
               <span className="eduflow:text-edu-text">И-мэйл</span>
-              <span className="eduflow:text-white">{member.email}</span>
+              <span className="eduflow:text-edu-ink">{member.email}</span>
             </div>
             <div className="eduflow:flex eduflow:justify-between eduflow:border-b eduflow:border-edu-border eduflow:pb-2">
               <span className="eduflow:text-edu-text">Үүрэг</span>
-              <span className="eduflow:text-white">{roleLabel(member.role)}</span>
+              <span className="eduflow:text-edu-ink">{roleLabel(member.role)}</span>
             </div>
             <div className="eduflow:flex eduflow:justify-between">
               <span className="eduflow:text-edu-text">Утас</span>
-              <span className="eduflow:text-white">
+              <span className="eduflow:text-edu-ink">
                 {member.phone ?? "Бүртгэгдээгүй"}
               </span>
             </div>
@@ -167,7 +167,7 @@ export const SettingsPage = () => {
           <div className="eduflow:grid eduflow:gap-3">
             <label className="eduflow:flex eduflow:items-center eduflow:justify-between eduflow:gap-3 eduflow:rounded-xl eduflow:border eduflow:border-edu-border eduflow:bg-edu-card2/50 eduflow:px-3 eduflow:py-2.5">
               <span>
-                <span className="eduflow:block eduflow:text-xs eduflow:text-white">
+                <span className="eduflow:block eduflow:text-xs eduflow:text-edu-ink">
                   Эцэг эхэд SMS
                 </span>
                 <span className="eduflow:block eduflow:text-[10px] eduflow:text-edu-text">
@@ -183,7 +183,7 @@ export const SettingsPage = () => {
             </label>
 
             <div className="eduflow:flex eduflow:items-center eduflow:justify-between eduflow:gap-3 eduflow:rounded-xl eduflow:border eduflow:border-edu-border eduflow:bg-edu-card2/50 eduflow:px-3 eduflow:py-2.5">
-              <span className="eduflow:text-xs eduflow:text-white">Хэл</span>
+              <span className="eduflow:text-xs eduflow:text-edu-ink">Хэл</span>
               <span className="eduflow:rounded-full eduflow:bg-edu-purple/15 eduflow:px-2.5 eduflow:py-0.5 eduflow:text-[10px] eduflow:text-edu-lav">
                 Монгол
               </span>
@@ -248,7 +248,7 @@ export const SettingsPage = () => {
           >
             <label className="eduflow:flex eduflow:items-center eduflow:justify-between eduflow:gap-3 eduflow:rounded-xl eduflow:border eduflow:border-edu-border eduflow:bg-edu-card2/50 eduflow:px-3 eduflow:py-2.5">
               <span>
-                <span className="eduflow:block eduflow:text-xs eduflow:text-white">
+                <span className="eduflow:block eduflow:text-xs eduflow:text-edu-ink">
                   Тэргүүлэгчид харагдах
                 </span>
                 <span className="eduflow:block eduflow:text-[10px] eduflow:text-edu-text">
@@ -271,7 +271,7 @@ export const SettingsPage = () => {
         <SectionCard title="AI шалгалт">
           <div className="eduflow:flex eduflow:items-center eduflow:justify-between eduflow:gap-2">
             <div>
-              <p className="eduflow:text-xs eduflow:text-white">
+              <p className="eduflow:text-xs eduflow:text-edu-ink">
                 {aiData?.eduflowAiInfo.configured
                   ? "Gemma 4 бэлэн"
                   : "Жишээ AI (Gemma тохируулаагүй)"}

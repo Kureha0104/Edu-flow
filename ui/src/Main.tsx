@@ -1,6 +1,6 @@
 import "./styles.css";
-import type { ReactNode } from "react";
-import { Navigate, Route, Routes } from "react-router";
+import { useEffect, useRef, type ReactNode } from "react";
+import { Navigate, Route, Routes, useLocation } from "react-router";
 import { AppLayout } from "erxes-ui";
 import manifest from "../../erxes.json" with { type: "json" };
 import { AuthProvider, rolePath, useAuth, type SessionRole } from "./auth/AuthContext";
@@ -44,6 +44,12 @@ const RoleGate = ({
 
 const Shell = () => {
   const { session } = useAuth();
+  const location = useLocation();
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    scrollRef.current?.scrollTo({ top: 0 });
+  }, [location.pathname]);
 
   if (!session) {
     return <LoginPage />;
@@ -55,8 +61,8 @@ const Shell = () => {
       title={manifest.title}
       sidebar={<Navigation />}
     >
-      <div className="eduflow:h-full eduflow:min-h-0 eduflow:overflow-y-auto eduflow:bg-edu-bg">
-        <div className="eduflow:mx-auto eduflow:w-full eduflow:max-w-7xl eduflow:p-5 eduflow:md:p-6">
+      <div ref={scrollRef} className="eduflow-surface eduflow:h-full eduflow:min-h-0 eduflow:overflow-y-auto eduflow:bg-edu-bg">
+        <div className="eduflow:mx-auto eduflow:w-full eduflow:max-w-7xl eduflow:px-5 eduflow:pb-5 eduflow:pt-10 eduflow:md:p-6">
       <Routes>
         <Route index element={<RoleHome />} />
         <Route path="teacher" element={<RoleGate role="teacher"><TeacherHomePage /></RoleGate>} />

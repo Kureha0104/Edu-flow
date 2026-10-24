@@ -1,16 +1,16 @@
 import { useMutation } from "@apollo/client";
 import {
   IconArrowRight,
-  IconFlame,
+  IconEye,
+  IconEyeClosed,
   IconLock,
   IconMail,
-  IconSchool,
   IconSparkles,
-  IconUsers,
 } from "@tabler/icons-react";
 import { useState, type FormEvent } from "react";
 import { useNavigate } from "react-router";
 import { Button, Input, cn } from "erxes-ui";
+import { EduflowMark } from "../assets/brand/EduflowMark";
 import { LOGIN } from "~/graphql";
 import { rolePath, useAuth, type SessionMember, type SessionRole } from "./AuthContext";
 
@@ -57,6 +57,14 @@ const DEMO_ACCOUNTS: DemoAccount[] = [
 const roleLabel = (role: SessionRole) =>
   role === "teacher" ? "Багш" : role === "student" ? "Сурагч" : "Эцэг эх";
 
+const initials = (name: string) =>
+  name
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() ?? "")
+    .join("");
+
 const toSessionMember = (member: {
   _id: string;
   name: string;
@@ -83,35 +91,12 @@ const toSessionMember = (member: {
   };
 };
 
-const Feature = ({
-  icon: Icon,
-  title,
-  description,
-}: {
-  icon: typeof IconSchool;
-  title: string;
-  description: string;
-}) => (
-  <div className="eduflow:flex eduflow:items-start eduflow:gap-3">
-    <span className="eduflow:mt-0.5 eduflow:inline-flex eduflow:size-9 eduflow:shrink-0 eduflow:items-center eduflow:justify-center eduflow:rounded-xl eduflow:bg-edu-lav/10 eduflow:text-edu-lav eduflow:ring-1 eduflow:ring-edu-lav/20">
-      <Icon className="eduflow:size-4" />
-    </span>
-    <div>
-      <p className="eduflow:text-xs eduflow:font-semibold eduflow:text-white">
-        {title}
-      </p>
-      <p className="eduflow:mt-0.5 eduflow:text-[11px] eduflow:leading-relaxed eduflow:text-edu-text">
-        {description}
-      </p>
-    </div>
-  </div>
-);
-
 export const LoginPage = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
   const [email, setEmail] = useState("sara.teacher@school.eduflow.local");
   const [password, setPassword] = useState("123456");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loginMutation, { loading }] = useMutation(LOGIN);
 
@@ -147,135 +132,171 @@ export const LoginPage = () => {
   };
 
   return (
-    <div className="eduflow:min-h-screen eduflow:bg-edu-bg eduflow:text-edu-text">
-      <div className="eduflow:mx-auto eduflow:grid eduflow:min-h-screen eduflow:w-full eduflow:max-w-6xl eduflow:items-stretch eduflow:lg:grid-cols-[1.05fr_0.95fr]">
-        <section className="eduflow:relative eduflow:flex eduflow:flex-col eduflow:justify-between eduflow:overflow-hidden eduflow:bg-gradient-to-br eduflow:from-edu-purple/25 eduflow:via-edu-card eduflow:to-edu-bg eduflow:p-8 eduflow:lg:p-12">
+    <div className="eduflow-surface eduflow:min-h-screen eduflow:bg-[#f5f7fe] eduflow:text-edu-ink">
+      <div className="eduflow:mx-auto eduflow:grid eduflow:min-h-screen eduflow:w-full eduflow:max-w-[1500px] eduflow:items-stretch eduflow:lg:grid-cols-[1.06fr_0.94fr]">
+        <section className="eduflow:relative eduflow:hidden eduflow:overflow-hidden eduflow:bg-[#eaf1ff] eduflow:p-10 eduflow:lg:flex eduflow:lg:flex-col eduflow:lg:justify-between eduflow:xl:p-14">
           <div
             aria-hidden
-            className="eduflow:pointer-events-none eduflow:absolute eduflow:-left-24 eduflow:top-20 eduflow:size-72 eduflow:rounded-full eduflow:bg-edu-blue/10 eduflow:blur-3xl"
+            className="eduflow:pointer-events-none eduflow:absolute eduflow:-right-24 eduflow:top-10 eduflow:size-[520px] eduflow:rounded-full eduflow:bg-gradient-to-br eduflow:from-[#c6d8ff] eduflow:to-[#eef4ff] eduflow:blur-2xl"
           />
-          <div className="eduflow:relative">
-            <div className="eduflow:flex eduflow:items-center eduflow:gap-3">
-              <span className="eduflow:inline-flex eduflow:size-11 eduflow:items-center eduflow:justify-center eduflow:rounded-2xl eduflow:bg-gradient-to-br eduflow:from-edu-lav eduflow:to-edu-purple eduflow:text-edu-bg eduflow:shadow-[0_0_30px_-6px_#7C3AED]">
-                <IconSchool className="eduflow:size-6" />
-              </span>
-              <div>
-                <p className="eduflow:text-lg eduflow:font-semibold eduflow:tracking-tight eduflow:text-white">
-                  Edu Flow
-                </p>
-                <p className="eduflow:text-[10px] eduflow:uppercase eduflow:tracking-[0.2em] eduflow:text-edu-lav">
-                  Homework · Streak · Progress
-                </p>
-              </div>
-            </div>
+          <div
+            aria-hidden
+            className="eduflow:pointer-events-none eduflow:absolute eduflow:-bottom-24 eduflow:-left-16 eduflow:size-[420px] eduflow:rounded-full eduflow:bg-gradient-to-tr eduflow:from-[#ffd9c8] eduflow:to-[#fff3ec] eduflow:blur-3xl"
+          />
+          <div
+            aria-hidden
+            className="eduflow:pointer-events-none eduflow:absolute eduflow:right-8 eduflow:top-36 eduflow:size-64 eduflow:rounded-full eduflow:border eduflow:border-white/80 eduflow:bg-gradient-to-br eduflow:from-[#9fbaff] eduflow:to-[#dbe6ff] eduflow:shadow-[0_30px_80px_-20px_#7c9cff]"
+          />
 
-            <h1 className="eduflow:mt-10 eduflow:max-w-md eduflow:text-3xl eduflow:font-semibold eduflow:leading-tight eduflow:tracking-tight eduflow:text-white eduflow:lg:text-4xl">
-              Даалгавраа хийж,
+          <div className="eduflow:relative eduflow:flex eduflow:items-center eduflow:gap-3">
+            <span className="eduflow:flex eduflow:size-11 eduflow:items-center eduflow:justify-center eduflow:rounded-2xl eduflow:bg-edu-lav eduflow:text-white eduflow:shadow-[0_10px_30px_-12px_#2f5bff]">
+              <EduflowMark className="eduflow:size-6" />
+            </span>
+            <span className="eduflow:text-lg eduflow:font-semibold eduflow:tracking-tight">
+              Edu Flow
+            </span>
+          </div>
+
+          <div className="eduflow:relative eduflow:max-w-xl">
+            <p className="eduflow:text-[11px] eduflow:font-semibold eduflow:uppercase eduflow:tracking-[0.26em] eduflow:text-[#50638a]">
+              — Илүү тодорхой сурах зам
+            </p>
+            <h1 className="eduflow:mt-5 eduflow:text-[40px] eduflow:font-semibold eduflow:leading-[1.02] eduflow:tracking-[-0.04em] eduflow:text-[#0b1220] eduflow:xl:text-[56px]">
+              Хүүхэд бүрийн
               <br />
-              цувралаа үргэлжлүүл.
+              сурах зам.
             </h1>
-            <p className="eduflow:mt-3 eduflow:max-w-md eduflow:text-sm eduflow:leading-relaxed eduflow:text-edu-text">
-              Багш даалгавар өгнө. Сурагч дэвтрээ зураглан илгээнэ. AI шалгаж,
-              эцэг эх явцыг нь хянана.
+            <p className="eduflow:mt-6 eduflow:max-w-md eduflow:text-base eduflow:leading-relaxed eduflow:text-[#53617c]">
+              Багш даалгавар өгч, сурагч дэвтрээ зураглан илгээж, AI шалгана.
+              Эцэг эх явцыг нь нэг дор харна.
             </p>
 
-            <div className="eduflow:mt-8 eduflow:grid eduflow:max-w-md eduflow:gap-4">
-              <Feature
-                icon={IconSchool}
-                title="Багшид зориулсан ажлын талбар"
-                description="Даалгавар өгөх, илгээлтийг шалгах, хичээлийн төлөвлөгөө батлах."
-              />
-              <Feature
-                icon={IconSparkles}
-                title="AI шалгалт ба дасан зохицсон дасгал"
-                description="Сурагчийн сул ойлголтыг олж, түвшинд тохирсон богино дасгал үүсгэнэ."
-              />
-              <Feature
-                icon={IconFlame}
-                title="Зөвхөн сурагчид цуврал"
-                description="Өдөр бүр даалгавраа хийж дүн, цувралаа өсгөнө."
-              />
-              <Feature
-                icon={IconUsers}
-                title="Эцэг эхийн хяналт"
-                description="Хүүхдийн явц, AI дүгнэлт, SMS мэдэгдлийг нэг дор харна."
-              />
+            <div className="eduflow:mt-10 eduflow:flex eduflow:items-center eduflow:gap-3">
+              <div className="eduflow:flex eduflow:-space-x-2">
+                {["А", "Б", "С", "Т"].map((letter, index) => (
+                  <span
+                    key={letter}
+                    className={cn(
+                      "eduflow:flex eduflow:size-9 eduflow:items-center eduflow:justify-center eduflow:rounded-full eduflow:border-2 eduflow:border-[#eaf1ff] eduflow:text-[10px] eduflow:font-semibold",
+                      index === 0
+                        ? "eduflow:bg-[#c9d9ff] eduflow:text-[#233b74]"
+                        : index === 1
+                          ? "eduflow:bg-[#ffd9c8] eduflow:text-[#7a3a22]"
+                          : index === 2
+                            ? "eduflow:bg-[#d6f3e5] eduflow:text-[#1f5a45]"
+                            : "eduflow:bg-[#e6ddff] eduflow:text-[#3e2b7a]",
+                    )}
+                  >
+                    {letter}
+                  </span>
+                ))}
+              </div>
+              <div>
+                <p className="eduflow:text-[11px] eduflow:font-semibold eduflow:text-[#23324d]">
+                  5А ангийн сурагчид
+                </p>
+                <p className="eduflow:text-[10px] eduflow:text-[#68758f]">
+                  3 сурагч · 1 эцэг эх · өдөр тутмын цуврал
+                </p>
+              </div>
             </div>
           </div>
 
-          <p className="eduflow:relative eduflow:mt-8 eduflow:text-[10px] eduflow:text-edu-text/70">
-            Жишээ сургууль · 5А анги · Бүх өгөгдөл демо
+          <p className="eduflow:relative eduflow:text-[10px] eduflow:text-[#7b879e]">
+            Edu Flow · жишээ сургууль · бүх өгөгдөл демо
           </p>
         </section>
 
-        <section className="eduflow:flex eduflow:items-center eduflow:justify-center eduflow:bg-edu-bg eduflow:p-6 eduflow:lg:p-12">
-          <div className="eduflow:w-full eduflow:max-w-sm">
-            <div className="eduflow:rounded-2xl eduflow:border eduflow:border-edu-border eduflow:bg-edu-card eduflow:p-6 eduflow:shadow-[0_0_60px_-30px_#7C3AED]">
-              <h2 className="eduflow:text-xl eduflow:font-semibold eduflow:text-white">
-                Нэвтрэх
-              </h2>
-              <p className="eduflow:mt-1 eduflow:text-xs eduflow:text-edu-text">
-                Сургуулийн бүртгэлээрээ нэвтэрнэ үү.
-              </p>
-
-              <form onSubmit={handleSubmit} className="eduflow:mt-5 eduflow:grid eduflow:gap-3">
-                <label className="eduflow:grid eduflow:gap-1.5">
-                  <span className="eduflow:text-[11px] eduflow:font-medium eduflow:text-edu-text">
-                    И-мэйл
-                  </span>
-                  <div className="eduflow:relative">
-                    <IconMail className="eduflow:pointer-events-none eduflow:absolute eduflow:left-3 eduflow:top-1/2 eduflow:size-4 eduflow:-translate-y-1/2 eduflow:text-edu-text/60" />
-                    <Input
-                      required
-                      type="email"
-                      value={email}
-                      autoComplete="username"
-                      onChange={(event) => setEmail(event.target.value)}
-                      className="eduflow:pl-9"
-                    />
-                  </div>
-                </label>
-
-                <label className="eduflow:grid eduflow:gap-1.5">
-                  <span className="eduflow:text-[11px] eduflow:font-medium eduflow:text-edu-text">
-                    Нууц үг
-                  </span>
-                  <div className="eduflow:relative">
-                    <IconLock className="eduflow:pointer-events-none eduflow:absolute eduflow:left-3 eduflow:top-1/2 eduflow:size-4 eduflow:-translate-y-1/2 eduflow:text-edu-text/60" />
-                    <Input
-                      required
-                      type="password"
-                      value={password}
-                      autoComplete="current-password"
-                      onChange={(event) => setPassword(event.target.value)}
-                      className="eduflow:pl-9"
-                    />
-                  </div>
-                </label>
-
-                {error && (
-                  <p className="eduflow:rounded-lg eduflow:border eduflow:border-edu-lav/30 eduflow:bg-edu-purple/10 eduflow:px-3 eduflow:py-2 eduflow:text-[11px] eduflow:text-edu-lav">
-                    {error}
-                  </p>
-                )}
-
-                <Button type="submit" disabled={loading} className="eduflow:mt-1">
-                  {loading ? "Нэвтэрч байна…" : "Нэвтрэх"}
-                  <IconArrowRight className="eduflow:size-4" />
-                </Button>
-              </form>
+        <section className="eduflow:flex eduflow:items-center eduflow:justify-center eduflow:bg-white eduflow:px-5 eduflow:py-10 eduflow:sm:px-8 eduflow:lg:px-12">
+          <div className="eduflow:w-full eduflow:max-w-[420px]">
+            <div className="eduflow:mb-8 eduflow:flex eduflow:items-center eduflow:gap-3 eduflow:lg:hidden">
+              <span className="eduflow:flex eduflow:size-10 eduflow:items-center eduflow:justify-center eduflow:rounded-2xl eduflow:bg-edu-lav eduflow:text-white">
+                <EduflowMark className="eduflow:size-5" />
+              </span>
+              <span className="eduflow:text-lg eduflow:font-semibold">
+                Edu Flow
+              </span>
             </div>
 
-            <div className="eduflow:mt-5">
+            <h2 className="eduflow:text-3xl eduflow:font-semibold eduflow:tracking-tight eduflow:text-[#0b1220]">
+              Тавтай морил
+            </h2>
+            <p className="eduflow:mt-2 eduflow:text-sm eduflow:text-[#67738b]">
+              Сургуулийн бүртгэлээрээ нэвтэрнэ үү.
+            </p>
+
+            <form onSubmit={handleSubmit} className="eduflow:mt-8 eduflow:grid eduflow:gap-4">
+              <label className="eduflow:grid eduflow:gap-1.5">
+                <span className="eduflow:text-[11px] eduflow:font-medium eduflow:text-[#3c4a63]">
+                  И-мэйл
+                </span>
+                <div className="eduflow:relative">
+                  <IconMail className="eduflow:pointer-events-none eduflow:absolute eduflow:left-3 eduflow:top-1/2 eduflow:size-4 eduflow:-translate-y-1/2 eduflow:text-[#8a96ad]" />
+                  <Input
+                    required
+                    type="email"
+                    value={email}
+                    autoComplete="username"
+                    onChange={(event) => setEmail(event.target.value)}
+                    className="eduflow:h-11 eduflow:rounded-xl eduflow:border-[#dfe5f1] eduflow:bg-white eduflow:pl-9 eduflow:text-[#0b1220]"
+                  />
+                </div>
+              </label>
+
+              <label className="eduflow:grid eduflow:gap-1.5">
+                <span className="eduflow:text-[11px] eduflow:font-medium eduflow:text-[#3c4a63]">
+                  Нууц үг
+                </span>
+                <div className="eduflow:relative">
+                  <IconLock className="eduflow:pointer-events-none eduflow:absolute eduflow:left-3 eduflow:top-1/2 eduflow:size-4 eduflow:-translate-y-1/2 eduflow:text-[#8a96ad]" />
+                  <Input
+                    required
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    autoComplete="current-password"
+                    onChange={(event) => setPassword(event.target.value)}
+                    className="eduflow:h-11 eduflow:rounded-xl eduflow:border-[#dfe5f1] eduflow:bg-white eduflow:pl-9 eduflow:pr-9 eduflow:text-[#0b1220]"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((value) => !value)}
+                    aria-label={showPassword ? "Нууц үг нуух" : "Нууц үг харах"}
+                    className="eduflow:absolute eduflow:right-2.5 eduflow:top-1/2 eduflow:-translate-y-1/2 eduflow:text-[#8a96ad] hover:eduflow:text-[#2f5bff]"
+                  >
+                    {showPassword ? (
+                      <IconEyeClosed className="eduflow:size-4" />
+                    ) : (
+                      <IconEye className="eduflow:size-4" />
+                    )}
+                  </button>
+                </div>
+              </label>
+
+              {error && (
+                <p className="eduflow:rounded-xl eduflow:border eduflow:border-[#ffd2c7] eduflow:bg-[#fff1ed] eduflow:px-3 eduflow:py-2.5 eduflow:text-[11px] eduflow:text-[#a33a20]">
+                  {error}
+                </p>
+              )}
+
+              <Button
+                type="submit"
+                disabled={loading}
+                className="eduflow:mt-1 eduflow:h-11 eduflow:rounded-xl eduflow:bg-edu-lav eduflow:text-sm eduflow:text-white hover:eduflow:bg-edu-blue"
+              >
+                {loading ? "Нэвтэрч байна…" : "Нэвтрэх"}
+                <IconArrowRight className="eduflow:size-4" />
+              </Button>
+            </form>
+
+            <div className="eduflow:mt-7">
               <div className="eduflow:flex eduflow:items-center eduflow:justify-between">
-                <p className="eduflow:text-[10px] eduflow:uppercase eduflow:tracking-widest eduflow:text-edu-text">
+                <p className="eduflow:text-[10px] eduflow:font-medium eduflow:uppercase eduflow:tracking-[0.16em] eduflow:text-[#8a96ad]">
                   Жишээ бүртгэл
                 </p>
-                <span className="eduflow:text-[10px] eduflow:text-edu-text/70">
+                <span className="eduflow:text-[10px] eduflow:text-[#8a96ad]">
                   нууц үг: 123456
                 </span>
               </div>
-
               <div className="eduflow:mt-2 eduflow:grid eduflow:gap-1.5">
                 {DEMO_ACCOUNTS.map((account) => (
                   <button
@@ -283,20 +304,22 @@ export const LoginPage = () => {
                     type="button"
                     disabled={loading}
                     onClick={() => void signIn(account.email, "123456")}
-                    className={cn(
-                      "eduflow:flex eduflow:items-center eduflow:justify-between eduflow:gap-3 eduflow:rounded-xl eduflow:border eduflow:border-edu-border eduflow:bg-edu-card/60 eduflow:px-3 eduflow:py-2 eduflow:text-left eduflow:transition",
-                      "hover:eduflow:border-edu-lav/40 hover:eduflow:bg-edu-card2",
-                    )}
+                    className="eduflow:flex eduflow:items-center eduflow:justify-between eduflow:gap-3 eduflow:rounded-xl eduflow:border eduflow:border-[#e6ebf5] eduflow:bg-[#fbfcff] eduflow:px-3 eduflow:py-2.5 eduflow:text-left eduflow:transition hover:eduflow:border-[#c6d5ff] hover:eduflow:bg-[#f4f7ff]"
                   >
-                    <span className="eduflow:min-w-0">
-                      <span className="eduflow:block eduflow:text-xs eduflow:font-medium eduflow:text-white">
-                        {account.name}
+                    <span className="eduflow:flex eduflow:min-w-0 eduflow:items-center eduflow:gap-2.5">
+                      <span className="eduflow:flex eduflow:size-8 eduflow:shrink-0 eduflow:items-center eduflow:justify-center eduflow:rounded-full eduflow:bg-[#e7edff] eduflow:text-[10px] eduflow:font-semibold eduflow:text-[#3154a3]">
+                        {initials(account.name)}
                       </span>
-                      <span className="eduflow:block eduflow:truncate eduflow:text-[10px] eduflow:text-edu-text">
-                        {account.detail}
+                      <span className="eduflow:min-w-0">
+                        <span className="eduflow:block eduflow:text-xs eduflow:font-medium eduflow:text-[#14203a]">
+                          {account.name}
+                        </span>
+                        <span className="eduflow:block eduflow:truncate eduflow:text-[10px] eduflow:text-[#7b879e]">
+                          {account.detail}
+                        </span>
                       </span>
                     </span>
-                    <span className="eduflow:shrink-0 eduflow:rounded-full eduflow:border eduflow:border-edu-border eduflow:px-2 eduflow:py-0.5 eduflow:text-[9px] eduflow:uppercase eduflow:tracking-wider eduflow:text-edu-lav">
+                    <span className="eduflow:shrink-0 eduflow:rounded-full eduflow:bg-white eduflow:px-2 eduflow:py-0.5 eduflow:text-[9px] eduflow:uppercase eduflow:tracking-wider eduflow:text-[#50638a] eduflow:ring-1 eduflow:ring-[#e6ebf5]">
                       {roleLabel(account.role)}
                     </span>
                   </button>
@@ -304,8 +327,9 @@ export const LoginPage = () => {
               </div>
             </div>
 
-            <p className="eduflow:mt-4 eduflow:text-center eduflow:text-[10px] eduflow:text-edu-text/60">
-              Энэ нь демо нэвтрэлт. Бодит сургуулийн SSO дараагийн шат.
+            <p className="eduflow:mt-6 eduflow:flex eduflow:items-center eduflow:justify-center eduflow:gap-1.5 eduflow:text-center eduflow:text-[10px] eduflow:text-[#9aa5b8]">
+              <IconSparkles className="eduflow:size-3.5" />
+              Демо нэвтрэлт. Бодит сургуулийн SSO дараагийн шат.
             </p>
           </div>
         </section>

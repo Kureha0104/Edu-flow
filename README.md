@@ -1,5 +1,7 @@
 # Edu Flow
 
+![Edu Flow](assets/logo.jpg)
+
 Education workflow plugin for erxes
 
 An erxes plugin that lives outside the erxes monorepo and joins an erxes stack
@@ -27,8 +29,9 @@ installed only so TypeScript and Rspack can resolve the imports.
 A role-based Mongolian homework app with its own login screen:
 
 - **Teacher** — dashboard, square photo grid with a blur lightbox, editable
-  parent SMS, grade override, lesson plans with PDF/DOC/DOCX attachments, and a
-  students overview showing missed work.
+  parent SMS, grade override, an AI lesson-plan builder (structured sections,
+  regenerate, quality check, Word export, saved library), PDF/DOC/DOCX
+  attachments, and a students overview with editable parent phone numbers.
 - **Student** — only their own screen: streak, homework grade, homework list,
   photo upload + AI check, adaptive quiz and a public/private leaderboard
   setting.
@@ -39,6 +42,8 @@ A role-based Mongolian homework app with its own login screen:
   mastery and keeps the streak.
 - **Leaderboard** — ranked by approved homework grade, with student-controlled
   visibility; private students stay visible to teachers and parents only.
+- **Light UI** — the login and app surfaces follow a light, airy blue reference
+  with responsive cards and a Kahoot-style student quiz.
 - **Settings** — profile, SMS preference, language, leaderboard privacy,
   AI/plugin status, demo reset.
 - **Seeded demo school** — Сара багш, Ану/Билгүүн/Сарнай, Хатагтай Туяа, 5А
@@ -78,6 +83,15 @@ endpoint, asks for strict JSON (`score`, `feedback`, `strengths`,
 `improvements`), and falls back to the deterministic demo checker on errors.
 Settings shows whether Gemma is configured. Supported models:
 [`gemma-4-31b-it`, `gemma-4-26b-a4b-it`](https://ai.google.dev/gemma/docs/core/gemma_on_gemini_api).
+
+## AI lesson plans
+
+`eduflowGenerateLessonPlan` returns structured JSON — goals, measurable
+objectives, materials, timed activity stages, children’s participation,
+differentiation and assessment. The teacher edits every section, asks for an
+improvement (`Сайжруулах`) with instructions such as “add movement”, runs an AI
+quality check, saves to the library, or downloads a Word document. No long
+unstructured text block, no manual re-typing.
 
 ## Parent SMS: Twilio
 
@@ -153,6 +167,9 @@ a private gateway-only network and strip user/tenant headers at public ingress.
 | `npm run fmt`     | oxfmt                                           |
 
 ## Deploy
+
+See [docs/deployment.md](docs/deployment.md) for online MongoDB (Atlas), Redis,
+Docker images, public UI hosting, HTTPS and multi-device access.
 
 - **API**: `docker build --build-arg UI_ENTRY_URL=<remoteEntry.js URL> -t <image> .`
   The lockfile is committed, so the image build is reproducible.

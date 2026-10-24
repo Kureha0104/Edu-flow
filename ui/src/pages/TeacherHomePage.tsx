@@ -38,7 +38,7 @@ const RecentHomework = ({ demo }: { demo: Demo }) => (
             <p className="eduflow:text-[10px] eduflow:text-edu-lav">
               {homework.subject}
             </p>
-            <p className="eduflow:text-xs eduflow:font-semibold eduflow:text-white">
+            <p className="eduflow:text-xs eduflow:font-semibold eduflow:text-edu-ink">
               {homework.title}
             </p>
             <p className="eduflow:mt-0.5 eduflow:text-[10px] eduflow:text-edu-text">
@@ -98,7 +98,7 @@ const ReviewQueue = ({ demo }: { demo: Demo }) => {
             <div className="eduflow:flex eduflow:min-w-0 eduflow:items-center eduflow:gap-2">
               <Avatar name={submission.student?.name ?? "Сурагч"} size="sm" />
               <div className="eduflow:min-w-0">
-                <p className="eduflow:truncate eduflow:text-xs eduflow:text-white">
+                <p className="eduflow:truncate eduflow:text-xs eduflow:text-edu-ink">
                   {submission.student?.name ?? "Сурагч"}
                 </p>
                 <p className="eduflow:truncate eduflow:text-[10px] eduflow:text-edu-text">
@@ -156,7 +156,7 @@ export const TeacherHomePage = () => {
         }
       />
 
-      <div className="eduflow:grid eduflow:gap-3 eduflow:sm:grid-cols-2 eduflow:xl:grid-cols-4">
+      <div className="eduflow:grid eduflow:grid-cols-2 eduflow:gap-3 eduflow:xl:grid-cols-4">
         <StatCard
           label="Сурагч"
           value={demo.stats.totalStudents}
@@ -233,7 +233,7 @@ export const TeacherHomePage = () => {
               <p className="eduflow:text-[10px] eduflow:text-edu-lav">
                 {plan.subject}
               </p>
-              <p className="eduflow:mt-0.5 eduflow:line-clamp-2 eduflow:text-xs eduflow:font-medium eduflow:text-white">
+              <p className="eduflow:mt-0.5 eduflow:line-clamp-2 eduflow:text-xs eduflow:font-medium eduflow:text-edu-ink">
                 {plan.title}
               </p>
               <div className="eduflow:mt-2">

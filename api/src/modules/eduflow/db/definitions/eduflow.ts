@@ -148,6 +148,23 @@ eduflowSubmissionSchema.index(
   { unique: true },
 );
 
+export interface IEduflowActivityStage {
+  name: string;
+  minutes: number;
+  description: string;
+  childrenRole: string;
+}
+
+const activityStageSchema = new Schema(
+  {
+    name: { type: String, required: true },
+    minutes: { type: Number, required: true },
+    description: { type: String, required: true },
+    childrenRole: { type: String, default: "" },
+  },
+  { _id: false },
+);
+
 export interface IEduflowAttachment {
   name: string;
   mimeType: string;
@@ -171,9 +188,20 @@ export interface IEduflowLessonPlan {
   title: string;
   subject: string;
   objectives?: string;
+  goals?: string;
+  learningObjectives: string[];
   content?: string;
   materials?: string;
+  activities: IEduflowActivityStage[];
+  childrenParticipation?: string;
+  differentiation?: string;
   assessment?: string;
+  ageGroup?: string;
+  duration?: number;
+  learningArea?: string;
+  qualityScore?: number;
+  qualityIssues: string[];
+  source?: string;
   attachments: IEduflowAttachment[];
   status: EduflowLessonPlanStatus;
   reviewNote?: string;
@@ -191,9 +219,20 @@ export const eduflowLessonPlanSchema = schemaWrapper(
     title: { type: String, required: true },
     subject: { type: String, required: true },
     objectives: String,
+    goals: String,
+    learningObjectives: { type: [String], default: [] },
     content: String,
     materials: String,
+    activities: { type: [activityStageSchema], default: [] },
+    childrenParticipation: String,
+    differentiation: String,
     assessment: String,
+    ageGroup: String,
+    duration: Number,
+    learningArea: String,
+    qualityScore: Number,
+    qualityIssues: { type: [String], default: [] },
+    source: { type: String, default: "manual" },
     attachments: { type: [attachmentSchema], default: [] },
     status: {
       type: String,

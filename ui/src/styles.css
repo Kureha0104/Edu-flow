@@ -58,15 +58,16 @@
   --color-scroll: var(--scroll);
 
   /* Edu Flow demo palette */
-  --color-edu-bg: #080615;
-  --color-edu-card: #100b24;
-  --color-edu-card2: #171338;
-  --color-edu-lav: #c4b5fd;
-  --color-edu-purple: #7c3aed;
-  --color-edu-blue: #60a5fa;
-  --color-edu-text: #c5bddf;
-  --color-edu-cyan: #67e8f9;
-  --color-edu-border: #2a2450;
+  --color-edu-bg: #f5f7fe;
+  --color-edu-card: #ffffff;
+  --color-edu-card2: #f1f4fb;
+  --color-edu-lav: #2f5bff;
+  --color-edu-purple: #6d5ef8;
+  --color-edu-blue: #2563eb;
+  --color-edu-text: #5a6478;
+  --color-edu-cyan: #0891b2;
+  --color-edu-border: #e3e8f4;
+  --color-edu-ink: #0b1220;
 
   --radius-lg: var(--radius);
   --radius-md: calc(var(--radius) - 2px);
@@ -79,4 +80,70 @@
   --shadow-lg:
     0 0 0 1px var(--border-shadow), 0 1px 1px var(--shadow), 0 2px 2px var(--shadow),
     0 4px 4px var(--shadow), 0 8px 8px var(--shadow);
+}
+
+/* Light surfaces for the plugin. The host may be in dark mode, so form
+   controls inside the plugin need explicit light colors. */
+.eduflow-surface {
+  color-scheme: light;
+  color: #0b1220;
+  --background: #f5f7fe;
+  --foreground: #0b1220;
+  --card: #ffffff;
+  --card-foreground: #0b1220;
+  --popover: #ffffff;
+  --popover-foreground: #0b1220;
+  --primary: #2f5bff;
+  --primary-foreground: #ffffff;
+  --secondary: #eef2fb;
+  --secondary-foreground: #0b1220;
+  --muted: #f1f4fb;
+  --muted-foreground: #5a6478;
+  --accent: #e9f0ff;
+  --accent-foreground: #0b1220;
+  --border: #e3e8f4;
+  --input: #dfe5f1;
+  --ring: #2f5bff;
+  --destructive: #e11d48;
+  --destructive-foreground: #ffffff;
+  --color-background: #f5f7fe;
+  --color-foreground: #0b1220;
+  --color-card: #ffffff;
+  --color-card-foreground: #0b1220;
+  --color-popover: #ffffff;
+  --color-popover-foreground: #0b1220;
+  --color-primary: #2f5bff;
+  --color-primary-foreground: #ffffff;
+  --color-secondary: #eef2fb;
+  --color-secondary-foreground: #0b1220;
+  --color-muted: #f1f4fb;
+  --color-muted-foreground: #5a6478;
+  --color-accent: #e9f0ff;
+  --color-accent-foreground: #0b1220;
+  --color-border: #e3e8f4;
+  --color-input: #dfe5f1;
+  --color-ring: #2f5bff;
+}
+
+.eduflow-surface input:not([type="checkbox"]):not([type="radio"]),
+.eduflow-surface textarea,
+.eduflow-surface select {
+  background-color: #ffffff !important;
+  color: #0b1220 !important;
+  border-color: #e3e8f4 !important;
+}
+
+.eduflow-surface input::placeholder,
+.eduflow-surface textarea::placeholder {
+  color: #9aa5b8 !important;
+}
+
+.eduflow-surface input[type="checkbox"] {
+  accent-color: #2f5bff;
+}
+
+
+.eduflow-surface a.bg-background,
+.eduflow-surface button.bg-background {
+  color: #0b1220;
 }

@@ -12,7 +12,13 @@ import type {
   IEduflowQuizQuestion,
   IEduflowSubmissionDocument,
 } from "../modules/eduflow/db/definitions/eduflow.ts";
-import { aiInfo, checkHomeworkImage } from "../modules/eduflow/ai.ts";
+import {
+  aiInfo,
+  assessLessonPlan,
+  checkHomeworkImage,
+  generateLessonPlan,
+  type LessonPlanDraft,
+} from "../modules/eduflow/ai.ts";
 import { buildQuizQuestions, pickQuestion } from "../modules/eduflow/quizBank.ts";
 import { ensureDemoData } from "../modules/eduflow/seed.ts";
 import { sendParentSms } from "../modules/eduflow/sms.ts";
@@ -44,6 +50,7 @@ export const typeDefs = gql`
     grade: String
     avatar: String
     parentId: String
+    parentPhone: String
     leaderboardVisible: Boolean!
     streak: Int!
     longestStreak: Int!
@@ -108,6 +115,45 @@ export const typeDefs = gql`
     data: String!
   }
 
+  type EduflowActivityStage {
+    name: String!
+    minutes: Int!
+    description: String!
+    childrenRole: String!
+  }
+
+  input EduflowActivityStageInput {
+    name: String!
+    minutes: Int!
+    description: String!
+    childrenRole: String!
+  }
+
+  type EduflowGeneratedPlan {
+    title: String!
+    ageGroup: String!
+    duration: Int!
+    learningArea: String!
+    goals: String!
+    learningObjectives: [String!]!
+    materials: String!
+    activities: [EduflowActivityStage!]!
+    childrenParticipation: String!
+    differentiation: String!
+    assessment: String!
+    qualityScore: Int!
+    qualityIssues: [String!]!
+  }
+
+  input EduflowPlanRequest {
+    group: String!
+    learningArea: String!
+    topic: String!
+    duration: Int!
+    instructions: String
+    currentPlan: String
+  }
+
   type EduflowLessonPlan {
     _id: String!
     classId: String!
@@ -115,9 +161,20 @@ export const typeDefs = gql`
     title: String!
     subject: String!
     objectives: String
+    goals: String
+    learningObjectives: [String!]!
     content: String
     materials: String
+    activities: [EduflowActivityStage!]!
+    childrenParticipation: String
+    differentiation: String
     assessment: String
+    ageGroup: String
+    duration: Int
+    learningArea: String
+    qualityScore: Int
+    qualityIssues: [String!]!
+    source: String
     attachments: [EduflowAttachment!]!
     status: String!
     reviewNote: String
@@ -273,15 +330,32 @@ export const typeDefs = gql`
       title: String!
       subject: String!
       objectives: String
+      goals: String
+      learningObjectives: [String!]
       content: String
       materials: String
+      activities: [EduflowActivityStageInput!]
+      childrenParticipation: String
+      differentiation: String
       assessment: String
+      ageGroup: String
+      duration: Int
+      learningArea: String
+      qualityScore: Int
+      qualityIssues: [String!]
+      source: String
       classId: String
       attachments: [EduflowAttachmentInput!]
     ): EduflowLessonPlan!
+    eduflowGenerateLessonPlan(request: EduflowPlanRequest!): EduflowGeneratedPlan!
+    eduflowAssessPlan(planId: String!): EduflowLessonPlan!
     eduflowSetLeaderboardVisibility(
       studentId: String!
       visible: Boolean!
+    ): EduflowMember!
+    eduflowSetParentPhone(
+      studentId: String!
+      phone: String!
     ): EduflowMember!
     eduflowUpdateLessonPlanStatus(
       planId: String!
@@ -999,18 +1073,45 @@ export const resolvers = {
         title,
         subject,
         objectives,
+        goals,
+        learningObjectives,
         content,
         materials,
+        activities,
+        childrenParticipation,
+        differentiation,
         assessment,
+        ageGroup,
+        duration,
+        learningArea,
+        qualityScore,
+        qualityIssues,
+        source,
         classId,
         attachments,
       }: {
         title: string;
         subject: string;
         objectives?: string;
+        goals?: string;
+        learningObjectives?: string[];
         content?: string;
         materials?: string;
+        activities?: {
+          name: string;
+          minutes: number;
+          description: string;
+          childrenRole: string;
+        }[];
+        childrenParticipation?: string;
+        differentiation?: string;
         assessment?: string;
+        ageGroup?: string;
+        duration?: number;
+        learningArea?: string;
+        qualityScore?: number;
+        qualityIssues?: string[];
+        source?: string;
         classId?: string;
         attachments?: {
           name: string;
@@ -1054,13 +1155,92 @@ export const resolvers = {
         title: title.trim(),
         subject: subject.trim(),
         objectives,
+        goals,
+        learningObjectives: learningObjectives ?? [],
         content,
         materials,
+        activities: activities ?? [],
+        childrenParticipation,
+        differentiation,
         assessment,
+        ageGroup,
+        duration,
+        learningArea,
+        qualityScore,
+        qualityIssues: qualityIssues ?? [],
+        source: source ?? "manual",
         attachments: safeAttachments,
         status: "draft",
         createdAt: new Date(),
       });
+    },
+
+    eduflowGenerateLessonPlan: async (
+      _parent: unknown,
+      {
+        request,
+      }: {
+        request: {
+          group: string;
+          learningArea: string;
+          topic: string;
+          duration: number;
+          instructions?: string;
+          currentPlan?: string;
+        };
+      },
+      { user, checkPermission }: Context,
+    ) => {
+      requireUser(user);
+      await checkPermission(LESSON_PLAN_MANAGE);
+      return generateLessonPlan(request);
+    },
+
+    eduflowAssessPlan: async (
+      _parent: unknown,
+      { planId }: { planId: string },
+      { models, user, checkPermission }: Context,
+    ) => {
+      requireUser(user);
+      await checkPermission(LESSON_PLAN_MANAGE);
+      const plan = required<IEduflowLessonPlanDocument>(
+        await models.EduflowLessonPlans.findById(planId),
+        "Төлөвлөгөө олдсонгүй.",
+      );
+      const draft: LessonPlanDraft = {
+        title: plan.title,
+        ageGroup: plan.ageGroup ?? "5А",
+        duration: plan.duration ?? 30,
+        learningArea: plan.learningArea ?? plan.subject,
+        goals: plan.goals ?? plan.objectives ?? "",
+        learningObjectives: plan.learningObjectives ?? [],
+        materials: plan.materials ?? "",
+        activities: plan.activities.map((activity) => ({
+          name: activity.name,
+          minutes: activity.minutes,
+          description: activity.description,
+          childrenRole: activity.childrenRole,
+        })),
+        childrenParticipation: plan.childrenParticipation ?? "",
+        differentiation: plan.differentiation ?? "",
+        assessment: plan.assessment ?? "",
+        qualityScore: plan.qualityScore ?? 0,
+        qualityIssues: plan.qualityIssues ?? [],
+      };
+      const result = await assessLessonPlan(draft);
+      return required<IEduflowLessonPlanDocument>(
+        await models.EduflowLessonPlans.findByIdAndUpdate(
+          planId,
+          {
+            $set: {
+              qualityScore: result.score,
+              qualityIssues: result.issues,
+            },
+          },
+          { new: true },
+        ),
+        "Төлөвлөгөө олдсонгүй.",
+      );
     },
 
     eduflowUpdateLessonPlanStatus: async (
@@ -1349,6 +1529,38 @@ export const resolvers = {
         "Сурагч олдсонгүй.",
       );
     },
+
+    eduflowSetParentPhone: async (
+      _parent: unknown,
+      { studentId, phone }: { studentId: string; phone: string },
+      { models, user, checkPermission }: Context,
+    ) => {
+      requireUser(user);
+      await checkPermission(HOMEWORK_MANAGE);
+
+      const student = required<IEduflowMemberDocument>(
+        await models.EduflowMembers.findById(studentId),
+        "Сурагч олдсонгүй.",
+      );
+      const parentId = required<string>(
+        student.parentId,
+        "Энэ сурагчид эцэг эх холбогдоогүй байна.",
+      );
+      const normalized = phone.trim().replace(/[^+\d]/g, "");
+
+      if (!/^\+?\d{6,15}$/.test(normalized)) {
+        fail("Утасны дугаараа зөв оруулна уу. Жишээ: +97699112233");
+      }
+
+      return required<IEduflowMemberDocument>(
+        await models.EduflowMembers.findByIdAndUpdate(
+          parentId,
+          { $set: { phone: normalized } },
+          { new: true },
+        ),
+        "Эцэг эх олдсонгүй.",
+      );
+    },
   },
 
   EduflowClass: {
@@ -1457,6 +1669,15 @@ export const resolvers = {
       parent.lastCompletedDate?.toISOString() ?? null,
     leaderboardVisible: (parent: IEduflowMemberDocument) =>
       parent.leaderboardVisible !== false,
+    parentPhone: async (
+      parent: IEduflowMemberDocument,
+      _args: unknown,
+      { models }: Context,
+    ) => {
+      if (!parent.parentId) return null;
+      const parentMember = await models.EduflowMembers.findById(parent.parentId);
+      return parentMember?.phone ?? null;
+    },
   },
 
   EduflowConcept: {

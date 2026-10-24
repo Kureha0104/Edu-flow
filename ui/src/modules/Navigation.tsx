@@ -4,7 +4,6 @@ import {
   IconFlame,
   IconLayoutDashboard,
   IconLogout,
-  IconSchool,
   IconSettings,
   IconSparkles,
   IconTrophy,
@@ -14,6 +13,7 @@ import {
 // singleton keyed on the bare specifier, so deep imports would bundle a second
 // private copy instead of reusing the host's.
 import { NavigationMenuLinkItem, Sidebar } from "erxes-ui";
+import { EduflowMark } from "../assets/brand/EduflowMark";
 import { useNavigate } from "react-router";
 import manifest from "../../../erxes.json" with { type: "json" };
 import { useAuth, type SessionRole } from "../auth/AuthContext";
@@ -103,7 +103,7 @@ export const Navigation = () => {
       <Sidebar.GroupContent>
         <div className="eduflow:mb-3 eduflow:flex eduflow:items-center eduflow:gap-2.5 eduflow:px-2 eduflow:py-1">
           <span className="eduflow:inline-flex eduflow:size-9 eduflow:items-center eduflow:justify-center eduflow:rounded-xl eduflow:bg-gradient-to-br eduflow:from-edu-lav eduflow:to-edu-purple eduflow:text-edu-bg">
-            <IconSchool className="eduflow:size-4" />
+            <EduflowMark className="eduflow:size-4" />
           </span>
           <div className="eduflow:min-w-0">
             <p className="eduflow:truncate eduflow:text-xs eduflow:font-semibold eduflow:text-white">

@@ -66,6 +66,7 @@ export const DEMO_QUERY = gql(`
     grade
     avatar
     parentId
+    parentPhone
     leaderboardVisible
     streak
     longestStreak
@@ -123,9 +124,25 @@ export const DEMO_QUERY = gql(`
     title
     subject
     objectives
+    goals
+    learningObjectives
     content
     materials
+    activities {
+      name
+      minutes
+      description
+      childrenRole
+    }
+    childrenParticipation
+    differentiation
     assessment
+    ageGroup
+    duration
+    learningArea
+    qualityScore
+    qualityIssues
+    source
     attachments {
       name
       mimeType
@@ -236,18 +253,40 @@ export const CREATE_LESSON_PLAN = gql(`
     $title: String!
     $subject: String!
     $objectives: String
+    $goals: String
+    $learningObjectives: [String!]
     $content: String
     $materials: String
+    $activities: [EduflowActivityStageInput!]
+    $childrenParticipation: String
+    $differentiation: String
     $assessment: String
+    $ageGroup: String
+    $duration: Int
+    $learningArea: String
+    $qualityScore: Int
+    $qualityIssues: [String!]
+    $source: String
     $attachments: [EduflowAttachmentInput!]
   ) {
     eduflowCreateLessonPlan(
       title: $title
       subject: $subject
       objectives: $objectives
+      goals: $goals
+      learningObjectives: $learningObjectives
       content: $content
       materials: $materials
+      activities: $activities
+      childrenParticipation: $childrenParticipation
+      differentiation: $differentiation
       assessment: $assessment
+      ageGroup: $ageGroup
+      duration: $duration
+      learningArea: $learningArea
+      qualityScore: $qualityScore
+      qualityIssues: $qualityIssues
+      source: $source
       attachments: $attachments
     ) {
       _id
@@ -457,6 +496,51 @@ export const SET_LEADERBOARD_VISIBILITY = gql(`
     eduflowSetLeaderboardVisibility(studentId: $studentId, visible: $visible) {
       _id
       leaderboardVisible
+    }
+  }
+`);
+
+export const GENERATE_LESSON_PLAN = gql(`
+  mutation eduflowGenerateLessonPlan($request: EduflowPlanRequest!) {
+    eduflowGenerateLessonPlan(request: $request) {
+      title
+      ageGroup
+      duration
+      learningArea
+      goals
+      learningObjectives
+      materials
+      activities {
+        name
+        minutes
+        description
+        childrenRole
+      }
+      childrenParticipation
+      differentiation
+      assessment
+      qualityScore
+      qualityIssues
+    }
+  }
+`);
+
+export const ASSESS_LESSON_PLAN = gql(`
+  mutation eduflowAssessPlan($planId: String!) {
+    eduflowAssessPlan(planId: $planId) {
+      _id
+      qualityScore
+      qualityIssues
+    }
+  }
+`);
+
+export const SET_PARENT_PHONE = gql(`
+  mutation eduflowSetParentPhone($studentId: String!, $phone: String!) {
+    eduflowSetParentPhone(studentId: $studentId, phone: $phone) {
+      _id
+      name
+      phone
     }
   }
 `);

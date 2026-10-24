@@ -71,7 +71,7 @@ const HomeworkCard = ({
               label={status === "todo" ? "Эхлээгүй" : submissionLabel(status)}
             />
           </div>
-          <h3 className="eduflow:mt-2 eduflow:text-sm eduflow:font-semibold eduflow:text-white">
+          <h3 className="eduflow:mt-2 eduflow:text-sm eduflow:font-semibold eduflow:text-edu-ink">
             {homework.title}
           </h3>
           {homework.description && (
@@ -122,10 +122,24 @@ const HomeworkCard = ({
           <img
             src={image}
             alt={homework.title}
-            className="eduflow:h-28 eduflow:w-full eduflow:rounded-xl eduflow:border eduflow:border-edu-border eduflow:object-cover eduflow:sm:w-[150px]"
+            className="eduflow:h-28 eduflow:w-full eduflow:rounded-xl eduflow:border eduflow:border-edu-border eduflow:bg-edu-bg eduflow:object-contain eduflow:sm:w-[150px]"
           />
           <div className="eduflow:min-w-0">
-            {submission?.aiFeedback ? (
+            {draft?.homeworkId === homework._id ? (
+              <div className="eduflow:flex eduflow:h-full eduflow:flex-col eduflow:justify-between eduflow:gap-2">
+                <p className="eduflow:text-[11px] eduflow:text-edu-text">
+                  Шинэ зураг бэлэн боллоо. Илгээж AI шалгуулна уу.
+                </p>
+                <Button
+                  size="sm"
+                  onClick={() => onSubmit(homework._id)}
+                  disabled={busy}
+                >
+                  <IconUpload className="eduflow:size-4" />
+                  {busy ? "Шалгаж байна…" : "Шинэ зургийг илгээх"}
+                </Button>
+              </div>
+            ) : submission?.aiFeedback ? (
               <div className="eduflow:rounded-xl eduflow:border eduflow:border-edu-blue/20 eduflow:bg-edu-blue/5 eduflow:p-3">
                 <p className="eduflow:flex eduflow:items-center eduflow:gap-1.5 eduflow:text-[11px] eduflow:font-semibold eduflow:text-edu-blue">
                   <IconSparkles className="eduflow:size-3.5" />
@@ -154,7 +168,7 @@ const HomeworkCard = ({
         </div>
       )}
 
-      {approved && submission && (
+      {approved && submission && draft?.homeworkId !== homework._id && (
         <div className="eduflow:mt-3 eduflow:flex eduflow:items-center eduflow:gap-2 eduflow:rounded-lg eduflow:border eduflow:border-edu-cyan/25 eduflow:bg-edu-cyan/5 eduflow:px-3 eduflow:py-2 eduflow:text-[11px] eduflow:text-edu-cyan">
           <IconCheck className="eduflow:size-4" />
           Даалгавар дууссан. Эцэг эхэд мэдэгдэл бүртгэгдлээ (жишээ SMS).

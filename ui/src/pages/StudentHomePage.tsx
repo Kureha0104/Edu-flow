@@ -133,7 +133,7 @@ export const StudentHomePage = () => {
                         <p className="eduflow:text-[10px] eduflow:text-edu-lav">
                           {homework.subject}
                         </p>
-                        <p className="eduflow:text-xs eduflow:font-semibold eduflow:text-white">
+                        <p className="eduflow:text-xs eduflow:font-semibold eduflow:text-edu-ink">
                           {homework.title}
                         </p>
                         <p className="eduflow:mt-0.5 eduflow:text-[10px] eduflow:text-edu-text">
@@ -161,7 +161,7 @@ export const StudentHomePage = () => {
             <p className="eduflow:relative eduflow:text-[10px] eduflow:uppercase eduflow:tracking-wider eduflow:text-edu-lav">
               Өнөөдрийн дасгал
             </p>
-            <h3 className="eduflow:relative eduflow:mt-1 eduflow:text-sm eduflow:font-semibold eduflow:text-white">
+            <h3 className="eduflow:relative eduflow:mt-1 eduflow:text-sm eduflow:font-semibold eduflow:text-edu-ink">
               Сул ойлголтоо бэхжүүл
             </h3>
             <p className="eduflow:relative eduflow:mt-1 eduflow:text-[11px] eduflow:leading-relaxed eduflow:text-edu-text">
@@ -187,7 +187,7 @@ export const StudentHomePage = () => {
                     className="eduflow:rounded-xl eduflow:border eduflow:border-edu-border eduflow:bg-edu-card2/50 eduflow:p-3"
                   >
                     <div className="eduflow:flex eduflow:items-center eduflow:justify-between eduflow:gap-2">
-                      <p className="eduflow:text-xs eduflow:text-white">
+                      <p className="eduflow:text-xs eduflow:text-edu-ink">
                         {submission.homework?.title ?? "Даалгавар"}
                       </p>
                       <span className="eduflow:text-[10px] eduflow:text-edu-cyan">
@@ -212,7 +212,7 @@ export const StudentHomePage = () => {
 
       <Link
         to={`${base}/student/homework`}
-        className="eduflow:flex eduflow:items-center eduflow:justify-between eduflow:rounded-2xl eduflow:border eduflow:border-edu-border eduflow:bg-edu-card eduflow:px-4 eduflow:py-3 eduflow:text-xs eduflow:text-edu-text eduflow:transition hover:eduflow:border-edu-lav/30 hover:eduflow:text-white"
+        className="eduflow:flex eduflow:items-center eduflow:justify-between eduflow:rounded-2xl eduflow:border eduflow:border-edu-border eduflow:bg-edu-card eduflow:px-4 eduflow:py-3 eduflow:text-xs eduflow:text-edu-text eduflow:transition hover:eduflow:border-edu-lav/30 hover:eduflow:text-edu-ink"
       >
         <span className="eduflow:flex eduflow:items-center eduflow:gap-2">
           <IconBook className="eduflow:size-4 eduflow:text-edu-lav" />

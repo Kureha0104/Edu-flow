@@ -82,7 +82,7 @@ const SubmissionTile = ({
 
     <span className="eduflow:absolute eduflow:inset-x-0 eduflow:bottom-0 eduflow:bg-gradient-to-t eduflow:from-edu-bg eduflow:via-edu-bg/80 eduflow:to-transparent eduflow:p-3 eduflow:pt-8">
       <span className="eduflow:flex eduflow:items-center eduflow:justify-between eduflow:gap-2">
-        <span className="eduflow:truncate eduflow:text-[11px] eduflow:font-medium eduflow:text-white">
+        <span className="eduflow:truncate eduflow:text-[11px] eduflow:font-medium eduflow:text-edu-ink">
           {submission.student?.name ?? "Сурагч"}
         </span>
         <span className="eduflow:shrink-0 eduflow:text-[10px] eduflow:text-edu-cyan">
@@ -114,7 +114,7 @@ const HomeworkGroup = ({
             label={homework.status === "assigned" ? "Идэвхтэй" : "Хаагдсан"}
           />
         </div>
-        <h2 className="eduflow:mt-1.5 eduflow:text-sm eduflow:font-semibold eduflow:text-white">
+        <h2 className="eduflow:mt-1.5 eduflow:text-sm eduflow:font-semibold eduflow:text-edu-ink">
           {homework.title}
         </h2>
         <p className="eduflow:mt-0.5 eduflow:text-[11px] eduflow:text-edu-text">
@@ -423,7 +423,7 @@ export const TeacherHomeworkPage = () => {
               <div className="eduflow:flex eduflow:items-center eduflow:gap-2">
                 <Avatar name={selected.student?.name ?? "Сурагч"} />
                 <div>
-                  <p className="eduflow:text-sm eduflow:font-semibold eduflow:text-white">
+                  <p className="eduflow:text-sm eduflow:font-semibold eduflow:text-edu-ink">
                     {selected.student?.name ?? "Сурагч"}
                   </p>
                   <p className="eduflow:text-[10px] eduflow:text-edu-text">
@@ -519,7 +519,7 @@ export const TeacherHomeworkPage = () => {
         <div className="eduflow:grid eduflow:gap-3">
           <p className="eduflow:text-[11px] eduflow:leading-relaxed eduflow:text-edu-text">
             Мессежийг засаж болно. Хүлээн авагч:{" "}
-            <span className="eduflow:text-white">
+            <span className="eduflow:text-edu-ink">
               {demo.parent?.phone ?? "утас бүртгэгдээгүй"}
             </span>
           </p>

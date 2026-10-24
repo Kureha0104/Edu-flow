@@ -41,7 +41,7 @@ const EntryCard = ({ entry, featured }: { entry: Entry; featured?: boolean }) =>
     </span>
     <Avatar name={entry.member.name} />
     <div className="eduflow:min-w-0 eduflow:flex-1">
-      <p className="eduflow:truncate eduflow:text-xs eduflow:font-semibold eduflow:text-white">
+      <p className="eduflow:truncate eduflow:text-xs eduflow:font-semibold eduflow:text-edu-ink">
         {entry.member.name}
       </p>
       <p className="eduflow:text-[10px] eduflow:text-edu-text">
@@ -129,7 +129,7 @@ export const LeaderboardPage = () => {
                 <div className="eduflow:mt-4 eduflow:flex eduflow:items-center eduflow:gap-3">
                   <Avatar name={entry.member.name} size="lg" />
                   <div>
-                    <p className="eduflow:text-sm eduflow:font-semibold eduflow:text-white">
+                    <p className="eduflow:text-sm eduflow:font-semibold eduflow:text-edu-ink">
                       {entry.member.name}
                     </p>
                     <p className="eduflow:text-[10px] eduflow:text-edu-text">

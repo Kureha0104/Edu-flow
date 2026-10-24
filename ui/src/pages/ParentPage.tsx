@@ -46,7 +46,7 @@ const ChildSummary = ({
     <div className="eduflow:flex eduflow:items-center eduflow:gap-3">
       <Avatar name={child.name} size="lg" />
       <div className="eduflow:min-w-0">
-        <h3 className="eduflow:text-base eduflow:font-semibold eduflow:text-white">
+        <h3 className="eduflow:text-base eduflow:font-semibold eduflow:text-edu-ink">
           {child.name}
         </h3>
         <p className="eduflow:text-[11px] eduflow:text-edu-text">
@@ -189,7 +189,7 @@ export const ParentPage = () => {
             className={cn(
               "eduflow:flex eduflow:items-center eduflow:gap-2 eduflow:rounded-full eduflow:border eduflow:px-2.5 eduflow:py-1 eduflow:text-[11px] eduflow:transition",
               item._id === child._id
-                ? "eduflow:border-edu-lav/40 eduflow:bg-edu-purple/20 eduflow:text-white"
+                ? "eduflow:border-edu-lav/40 eduflow:bg-edu-purple/20 eduflow:text-edu-ink"
                 : "eduflow:border-edu-border eduflow:bg-edu-card eduflow:text-edu-text hover:eduflow:border-edu-lav/30",
             )}
           >
@@ -296,7 +296,7 @@ export const ParentPage = () => {
                         <p className="eduflow:text-[10px] eduflow:text-edu-lav">
                           {homework.subject}
                         </p>
-                        <h3 className="eduflow:text-sm eduflow:font-semibold eduflow:text-white">
+                        <h3 className="eduflow:text-sm eduflow:font-semibold eduflow:text-edu-ink">
                           {homework.title}
                         </h3>
                         <p className="eduflow:mt-1 eduflow:flex eduflow:items-center eduflow:gap-1 eduflow:text-[10px] eduflow:text-edu-text">

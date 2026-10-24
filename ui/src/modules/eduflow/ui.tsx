@@ -200,7 +200,7 @@ export const SectionCard = ({
       <div className="eduflow:mb-4 eduflow:flex eduflow:items-start eduflow:justify-between eduflow:gap-3">
         <div>
           {title && (
-            <h2 className="eduflow:text-sm eduflow:font-semibold eduflow:tracking-wide eduflow:text-white">
+            <h2 className="eduflow:text-sm eduflow:font-semibold eduflow:tracking-wide eduflow:text-edu-ink">
               {title}
             </h2>
           )}
@@ -251,7 +251,7 @@ export const StatCard = ({
           <Icon className="eduflow:size-4" />
         </span>
       </div>
-      <div className="eduflow:mt-2 eduflow:text-2xl eduflow:font-semibold eduflow:text-white">
+      <div className="eduflow:mt-2 eduflow:text-2xl eduflow:font-semibold eduflow:text-edu-ink">
         {value}
       </div>
       {hint && (
@@ -271,7 +271,7 @@ export const EmptyState = ({
   description?: string;
 }) => (
   <div className="eduflow:rounded-xl eduflow:border eduflow:dashed eduflow:border-edu-border eduflow:bg-edu-card2/50 eduflow:px-4 eduflow:py-8 eduflow:text-center">
-    <p className="eduflow:text-sm eduflow:font-medium eduflow:text-white">
+    <p className="eduflow:text-sm eduflow:font-medium eduflow:text-edu-ink">
       {title}
     </p>
     {description && (
@@ -333,7 +333,7 @@ export const PageHeading = ({
           {eyebrow}
         </p>
       )}
-      <h1 className="eduflow:mt-1 eduflow:text-xl eduflow:font-semibold eduflow:tracking-tight eduflow:text-white eduflow:md:text-2xl">
+      <h1 className="eduflow:mt-1 eduflow:text-xl eduflow:font-semibold eduflow:tracking-tight eduflow:text-edu-ink eduflow:md:text-2xl">
         {title}
       </h1>
       {description && (

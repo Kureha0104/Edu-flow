@@ -31,7 +31,7 @@ export const StreakCard = ({
             <p className="eduflow:text-[11px] eduflow:font-medium eduflow:uppercase eduflow:tracking-widest eduflow:text-edu-text">
               Одоогийн цуврал
             </p>
-            <h2 className="eduflow:mt-1 eduflow:text-2xl eduflow:font-semibold eduflow:text-white">
+            <h2 className="eduflow:mt-1 eduflow:text-2xl eduflow:font-semibold eduflow:text-edu-ink">
               {member.name}, үргэлжлүүлээрэй!
             </h2>
             <p className="eduflow:mt-1 eduflow:text-xs eduflow:text-edu-text">

@@ -17,27 +17,46 @@ export const initials = (name: string) =>
     .map((part) => part[0]?.toUpperCase() ?? "")
     .join("");
 
+const MONTHS = [
+  "1-р сар",
+  "2-р сар",
+  "3-р сар",
+  "4-р сар",
+  "5-р сар",
+  "6-р сар",
+  "7-р сар",
+  "8-р сар",
+  "9-р сар",
+  "10-р сар",
+  "11-р сар",
+  "12-р сар",
+];
+const WEEKDAYS = [
+  "Ням",
+  "Даваа",
+  "Мягмар",
+  "Лхагва",
+  "Пүрэв",
+  "Баасан",
+  "Бямба",
+];
+
 export const formatDate = (value?: string | null) => {
   if (!value) {
     return "—";
   }
-  return new Intl.DateTimeFormat("en", {
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(new Date(value));
+  const date = new Date(value);
+  const hours = String(date.getHours()).padStart(2, "0");
+  const minutes = String(date.getMinutes()).padStart(2, "0");
+  return `${MONTHS[date.getMonth()]} ${date.getDate()} · ${hours}:${minutes}`;
 };
 
 export const formatDay = (value?: string | null) => {
   if (!value) {
-    return "No due date";
+    return "Хугацаа тодорхойгүй";
   }
-  return new Intl.DateTimeFormat("en", {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-  }).format(new Date(value));
+  const date = new Date(value);
+  return `${WEEKDAYS[date.getDay()]} · ${MONTHS[date.getMonth()]} ${date.getDate()}`;
 };
 
 export const dueLabel = (value: string) => {
@@ -47,17 +66,17 @@ export const dueLabel = (value: string) => {
   today.setHours(0, 0, 0, 0);
   const days = Math.round((due.getTime() - today.getTime()) / 86_400_000);
 
-  if (days < 0) return `${Math.abs(days)}d overdue`;
-  if (days === 0) return "Due today";
-  if (days === 1) return "Due tomorrow";
-  return `Due in ${days}d`;
+  if (days < 0) return `${Math.abs(days)} өдөр хэтэрсэн`;
+  if (days === 0) return "Өнөөдөр дуусна";
+  if (days === 1) return "Маргааш дуусна";
+  return `${days} өдрийн дараа`;
 };
 
 export const submissionLabel = (status: string) => {
-  if (status === "approved") return "Approved";
-  if (status === "needs_work") return "Needs work";
-  if (status === "ai_checked") return "AI checked";
-  return "Submitted";
+  if (status === "approved") return "Баталгаажсан";
+  if (status === "needs_work") return "Дахин хийх";
+  if (status === "ai_checked") return "AI шалгасан";
+  return "Илгээсэн";
 };
 
 export const statusTone = (status: string) => {
@@ -278,7 +297,7 @@ export const ErrorBanner = ({
         onClick={onRetry}
         className="eduflow:rounded-md eduflow:border eduflow:border-edu-lav/30 eduflow:px-2 eduflow:py-1 eduflow:font-medium hover:eduflow:bg-edu-lav/10"
       >
-        Retry
+        Дахин оролдох
       </button>
     )}
   </div>
@@ -287,11 +306,42 @@ export const ErrorBanner = ({
 export const AiNotice = () => (
   <div className="eduflow:flex eduflow:items-start eduflow:gap-2 eduflow:rounded-xl eduflow:border eduflow:border-edu-blue/25 eduflow:bg-edu-blue/5 eduflow:px-3 eduflow:py-2.5 eduflow:text-[11px] eduflow:leading-relaxed eduflow:text-edu-text">
     <span className="eduflow:mt-0.5 eduflow:rounded-md eduflow:bg-edu-blue/15 eduflow:px-1.5 eduflow:py-0.5 eduflow:text-[10px] eduflow:font-semibold eduflow:text-edu-blue">
-      DEMO AI
+      ЖИШЭЭ AI
     </span>
     <span>
-      Photo checks and SMS are simulated. The workflow is real: upload →
-      AI-style review → teacher approval → parent update.
+      Зураг шалгах болон SMS нь жишээ. Урсгал нь бодит: зураг илгээх → AI
+      шалгах → багш батлах → эцэг эхэд мэдэгдэх.
     </span>
+  </div>
+);
+
+export const PageHeading = ({
+  eyebrow,
+  title,
+  description,
+  action,
+}: {
+  eyebrow?: string;
+  title: string;
+  description?: string;
+  action?: ReactNode;
+}) => (
+  <div className="eduflow:flex eduflow:flex-wrap eduflow:items-end eduflow:justify-between eduflow:gap-3">
+    <div>
+      {eyebrow && (
+        <p className="eduflow:text-[10px] eduflow:font-medium eduflow:uppercase eduflow:tracking-[0.18em] eduflow:text-edu-lav">
+          {eyebrow}
+        </p>
+      )}
+      <h1 className="eduflow:mt-1 eduflow:text-xl eduflow:font-semibold eduflow:tracking-tight eduflow:text-white eduflow:md:text-2xl">
+        {title}
+      </h1>
+      {description && (
+        <p className="eduflow:mt-1 eduflow:max-w-xl eduflow:text-xs eduflow:leading-relaxed eduflow:text-edu-text">
+          {description}
+        </p>
+      )}
+    </div>
+    {action}
   </div>
 );

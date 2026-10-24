@@ -24,19 +24,36 @@ installed only so TypeScript and Rspack can resolve the imports.
 
 ## What's in the demo
 
-- **Teacher workspace** — assign homework, review student photo submissions,
-  approve or request rework, and move lesson plans through draft → review →
-  approved.
-- **Student streak view** — Duolingo-style streak, XP and level; photograph the
-  notebook, get a mock AI check, resubmit when asked.
-- **Parent view** — per-child completion, AI feedback, streak/XP and a dummy SMS
-  inbox.
-- **Seeded demo school** — Ms. Sara, Anu/Bilguun/Sarnai and Mrs. Tuya are created
-  automatically on the first `eduflowDemo` query.
-- **Demo boundaries** — the role switcher is a UI preview and the signed-in
-  owner bypasses permissions. The API already declares granular homework,
-  submission, lesson-plan and notification actions; mapping real school roles
-  to them is the next step.
+A role-based Mongolian homework app with its own login screen:
+
+- **Teacher** — dashboard, assign homework, review photo submissions with
+  mock AI feedback, and move lesson plans through draft → review → approved.
+- **Student** — only their own screen: streak/XP/level, homework list, photo
+  upload + AI check, and an adaptive quiz.
+- **Parent** — only their own children: completion, AI feedback, streaks and a
+  dummy SMS inbox.
+- **Adaptive quiz** — picks the student's weakest concept, builds five
+  questions, raises difficulty after consecutive correct answers, updates
+  mastery and awards XP on completion.
+- **Settings** — profile, SMS preference, language (Mongolian), demo reset and
+  plugin info.
+- **Seeded demo school** — Сара багш, Ану/Билгүүн/Сарнай, Хатагтай Туяа, 5А
+  анги, homework, submissions, lesson plans and weak-concept maps.
+
+### Demo accounts
+
+| Role | Email | Password |
+| --- | --- | --- |
+| Teacher | `sara.teacher@school.eduflow.local` | `123456` |
+| Student | `anu.5a@school.eduflow.local` | `123456` |
+| Student | `bilguun.5a@school.eduflow.local` | `123456` |
+| Student | `sarnai.5a@school.eduflow.local` | `123456` |
+| Parent | `tuya.parent@example.com` | `123456` |
+
+The login is a **plugin-local demo layer**. The erxes user underneath is still
+the local owner, so backend permissions are not yet scoped to the demo account.
+Real school SSO/role mapping is the next step. The UI enforces separation:
+students only fetch their own member ID, parents only their own children.
 
 Photo review and SMS are simulated but the flow is real:
 `upload → AI-style score → teacher approval → streak/XP update → parent record`.
@@ -46,20 +63,20 @@ workflow.
 
 ## Demo walkthrough
 
-1. Sign in at `http://localhost:3001` (the local owner created during setup).
-2. Open `http://localhost:3001/eduflow`.
-3. Switch **Teacher / Student / Parent** at the top right.
-4. As Student, add a photo to an assignment and submit it for the AI check.
-5. As Teacher, approve it or request rework; as Parent, see the progress and
-   dummy SMS.
+1. Sign in at `http://localhost:3001` as the erxes owner, then open
+   `http://localhost:3001/eduflow`.
+2. Use a demo account above (or click one of the account cards).
+3. Teacher: assign homework, review submissions, approve a lesson plan.
+4. Student: upload a notebook photo, then do today's adaptive quiz.
+5. Parent: switch child, read AI feedback and queue a dummy SMS.
+6. Settings → **Демо reset** restores the school and signs you out.
 
-Reset the demo school (drops only `eduflow_*` collections, then reseeds):
+Reset from the shell if needed:
 
 ```sh
 docker exec eduflow-mongo mongosh erxes --quiet \
   --eval 'db.getCollectionNames().filter(c=>c.startsWith("eduflow")).forEach(c=>db.getCollection(c).drop())'
 ```
-
 
 ## Develop
 

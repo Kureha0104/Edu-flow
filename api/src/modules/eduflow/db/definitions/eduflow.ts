@@ -207,3 +207,100 @@ export const eduflowNotificationSchema = schemaWrapper(
     createdAt: { type: Date, default: Date.now },
   }),
 );
+
+export interface IEduflowConcept {
+  studentId: string;
+  subject: string;
+  topic: string;
+  mastery: number;
+  attempts: number;
+  correct: number;
+  updatedAt: Date;
+}
+
+export interface IEduflowConceptDocument
+  extends IEduflowConcept, Document {}
+
+export const eduflowConceptSchema = schemaWrapper(
+  new Schema({
+    studentId: { type: String, required: true },
+    subject: { type: String, required: true },
+    topic: { type: String, required: true },
+    mastery: { type: Number, default: 0 },
+    attempts: { type: Number, default: 0 },
+    correct: { type: Number, default: 0 },
+    updatedAt: { type: Date, default: Date.now },
+  }),
+);
+
+export interface IEduflowQuizQuestion {
+  prompt: string;
+  options: string[];
+  correctIndex: number;
+  difficulty: number;
+  explanation: string;
+}
+
+export interface IEduflowQuizAnswer {
+  questionIndex: number;
+  selectedIndex: number;
+  correct: boolean;
+}
+
+const quizQuestionSchema = new Schema(
+  {
+    prompt: { type: String, required: true },
+    options: { type: [String], required: true },
+    correctIndex: { type: Number, required: true },
+    difficulty: { type: Number, required: true },
+    explanation: { type: String, required: true },
+  },
+  { _id: false },
+);
+
+const quizAnswerSchema = new Schema(
+  {
+    questionIndex: { type: Number, required: true },
+    selectedIndex: { type: Number, required: true },
+    correct: { type: Boolean, required: true },
+  },
+  { _id: false },
+);
+
+export interface IEduflowQuiz {
+  studentId: string;
+  subject: string;
+  topic: string;
+  status: "active" | "completed";
+  questions: IEduflowQuizQuestion[];
+  answers: IEduflowQuizAnswer[];
+  correctStreak: number;
+  bestStreak: number;
+  currentDifficulty: number;
+  xpEarned: number;
+  createdAt: Date;
+  completedAt?: Date;
+}
+
+export interface IEduflowQuizDocument extends IEduflowQuiz, Document {}
+
+export const eduflowQuizSchema = schemaWrapper(
+  new Schema({
+    studentId: { type: String, required: true },
+    subject: { type: String, required: true },
+    topic: { type: String, required: true },
+    status: {
+      type: String,
+      enum: ["active", "completed"],
+      default: "active",
+    },
+    questions: { type: [quizQuestionSchema], default: [] },
+    answers: { type: [quizAnswerSchema], default: [] },
+    correctStreak: { type: Number, default: 0 },
+    bestStreak: { type: Number, default: 0 },
+    currentDifficulty: { type: Number, default: 1 },
+    xpEarned: { type: Number, default: 0 },
+    createdAt: { type: Date, default: Date.now },
+    completedAt: Date,
+  }),
+);

@@ -3,16 +3,20 @@ import { createGenerateModels } from "erxes-api-shared/utils";
 import type { Connection, Model } from "mongoose";
 import {
   type IEduflowClassDocument,
+  type IEduflowConceptDocument,
   type IEduflowHomeworkDocument,
   type IEduflowLessonPlanDocument,
   type IEduflowMemberDocument,
   type IEduflowNotificationDocument,
+  type IEduflowQuizDocument,
   type IEduflowSubmissionDocument,
   eduflowClassSchema,
+  eduflowConceptSchema,
   eduflowHomeworkSchema,
   eduflowLessonPlanSchema,
   eduflowMemberSchema,
   eduflowNotificationSchema,
+  eduflowQuizSchema,
   eduflowSubmissionSchema,
 } from "./modules/eduflow/db/definitions/eduflow.ts";
 
@@ -23,6 +27,8 @@ export interface IModels {
   EduflowSubmissions: Model<IEduflowSubmissionDocument>;
   EduflowLessonPlans: Model<IEduflowLessonPlanDocument>;
   EduflowNotifications: Model<IEduflowNotificationDocument>;
+  EduflowConcepts: Model<IEduflowConceptDocument>;
+  EduflowQuizzes: Model<IEduflowQuizDocument>;
 }
 
 /**
@@ -65,6 +71,14 @@ const loadClasses = (db: Connection) => {
   models.EduflowNotifications = db.model<IEduflowNotificationDocument>(
     "eduflow_notifications",
     eduflowNotificationSchema,
+  );
+  models.EduflowConcepts = db.model<IEduflowConceptDocument>(
+    "eduflow_concepts",
+    eduflowConceptSchema,
+  );
+  models.EduflowQuizzes = db.model<IEduflowQuizDocument>(
+    "eduflow_quizzes",
+    eduflowQuizSchema,
   );
 
   return models;

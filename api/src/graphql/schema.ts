@@ -3,19 +3,26 @@ import { gql } from "graphql-tag";
 import type { Context, IModels } from "../connectionResolvers.ts";
 import type {
   IEduflowClassDocument,
+  IEduflowConceptDocument,
   IEduflowHomeworkDocument,
   IEduflowLessonPlanDocument,
   IEduflowMemberDocument,
   IEduflowNotificationDocument,
+  IEduflowQuizDocument,
+  IEduflowQuizQuestion,
   IEduflowSubmissionDocument,
 } from "../modules/eduflow/db/definitions/eduflow.ts";
+import { buildQuizQuestions, pickQuestion } from "../modules/eduflow/quizBank.ts";
 import { ensureDemoData } from "../modules/eduflow/seed.ts";
 import {
+  DEMO_RESET,
   HOMEWORK_MANAGE,
   HOMEWORK_READ,
   LESSON_PLAN_APPROVE,
   LESSON_PLAN_MANAGE,
   NOTIFICATION_SEND,
+  QUIZ_PLAY,
+  QUIZ_READ,
   SUBMISSION_CREATE,
   SUBMISSION_READ,
   SUBMISSION_REVIEW,
@@ -133,8 +140,63 @@ export const typeDefs = gql`
     stats: EduflowStats!
   }
 
+  type EduflowConcept {
+    _id: String!
+    studentId: String!
+    subject: String!
+    topic: String!
+    mastery: Int!
+    attempts: Int!
+    correct: Int!
+    updatedAt: String
+  }
+
+  type EduflowQuizQuestion {
+    prompt: String!
+    options: [String!]!
+    difficulty: Int!
+  }
+
+  type EduflowQuiz {
+    _id: String!
+    studentId: String!
+    subject: String!
+    topic: String!
+    status: String!
+    questions: [EduflowQuizQuestion!]!
+    currentQuestionIndex: Int!
+    correctStreak: Int!
+    bestStreak: Int!
+    currentDifficulty: Int!
+    xpEarned: Int!
+    totalQuestions: Int!
+    answeredCount: Int!
+    correctCount: Int!
+    createdAt: String
+    completedAt: String
+  }
+
+  type EduflowAnswerResult {
+    correct: Boolean!
+    correctIndex: Int!
+    explanation: String!
+    quiz: EduflowQuiz!
+  }
+
+  type EduflowPractice {
+    member: EduflowMember!
+    concepts: [EduflowConcept!]!
+    activeQuiz: EduflowQuiz
+    completedQuizzes: [EduflowQuiz!]!
+  }
+
+  type EduflowSession {
+    member: EduflowMember!
+  }
+
   type Query {
     eduflowDemo(role: String!, memberId: String): EduflowDemo!
+    eduflowPractice(studentId: String!): EduflowPractice!
     eduflowMembers(role: String): [EduflowMember!]!
     eduflowHomeworks(classId: String): [EduflowHomework!]!
     eduflowSubmissions(homeworkId: String, studentId: String): [EduflowSubmission!]!
@@ -175,6 +237,14 @@ export const typeDefs = gql`
       planId: String!
       status: String!
     ): EduflowLessonPlan!
+    eduflowLogin(email: String!, password: String!): EduflowSession!
+    eduflowStartQuiz(studentId: String!): EduflowQuiz!
+    eduflowAnswerQuiz(
+      quizId: String!
+      questionIndex: Int!
+      selectedIndex: Int!
+    ): EduflowAnswerResult!
+    eduflowResetDemo: Boolean!
   }
 `;
 
@@ -252,10 +322,36 @@ const notifyParent = async (
     studentId: String(student._id),
     homeworkId: String(homework._id),
     channel: "sms",
-    message: `Edu Flow: ${student.name} completed "${homework.title}" with ${score}% and is on a ${streak}-day streak. 🔥`,
+    message: `Edu Flow: ${student.name} "${homework.title}" даалгаврыг ${score}% гүйцэтгэж, ${streak} өдрийн цуврал үргэлжлүүллээ. 🔥`,
     status: "sent_dummy",
     createdAt: new Date(),
   });
+};
+
+const bumpStreak = async (
+  models: IModels,
+  student: IEduflowMemberDocument,
+  points: number,
+) => {
+  const now = new Date();
+  const previous = student.lastCompletedDate;
+  const gap = previous ? daysBetween(now, previous) : null;
+
+  let streak = 1;
+  if (gap === 0) {
+    streak = Math.max(student.streak, 1);
+  } else if (gap === 1) {
+    streak = student.streak + 1;
+  }
+
+  const longestStreak = Math.max(student.longestStreak, streak);
+
+  await models.EduflowMembers.findByIdAndUpdate(student._id, {
+    $set: { streak, longestStreak, lastCompletedDate: now },
+    $inc: { points },
+  });
+
+  return { streak, longestStreak };
 };
 
 const applyApproval = async (
@@ -271,30 +367,14 @@ const applyApproval = async (
     "Student no longer exists.",
   );
 
-  const now = new Date();
-  const previous = student.lastCompletedDate;
-  const gap = previous ? daysBetween(now, previous) : null;
-
-  let streak = 1;
-  if (gap === 0) {
-    streak = Math.max(student.streak, 1);
-  } else if (gap === 1) {
-    streak = student.streak + 1;
-  }
-
-  const longestStreak = Math.max(student.longestStreak, streak);
-
-  await models.EduflowMembers.findByIdAndUpdate(student._id, {
-    $set: {
-      streak,
-      longestStreak,
-      lastCompletedDate: now,
-    },
-    $inc: { points: homework.points + 10 },
-  });
+  const { streak } = await bumpStreak(
+    models,
+    student,
+    homework.points + 10,
+  );
 
   await models.EduflowSubmissions.findByIdAndUpdate(submission._id, {
-    $set: { completedAt: now },
+    $set: { completedAt: new Date() },
   });
 
   await notifyParent(
@@ -468,6 +548,37 @@ export const resolvers = {
           averageStreak,
         },
       };
+    },
+
+    eduflowPractice: async (
+      _parent: unknown,
+      { studentId }: { studentId: string },
+      { models, user, checkPermission }: Context,
+    ) => {
+      requireUser(user);
+      await checkPermission(QUIZ_READ);
+      await ensureDemoData(models);
+
+      const member = required<IEduflowMemberDocument>(
+        await models.EduflowMembers.findById(studentId),
+        "Сурагч олдсонгүй.",
+      );
+
+      if (member.role !== "student") {
+        fail("Энэ хэсэг зөвхөн сурагчдад зориулагдсан.", "FORBIDDEN");
+      }
+
+      const [concepts, activeQuiz, completedQuizzes] = await Promise.all([
+        models.EduflowConcepts.find({ studentId }).sort({ mastery: 1 }),
+        models.EduflowQuizzes.findOne({ studentId, status: "active" }).sort({
+          createdAt: -1,
+        }),
+        models.EduflowQuizzes.find({ studentId, status: "completed" })
+          .sort({ completedAt: -1 })
+          .limit(3),
+      ]);
+
+      return { member, concepts, activeQuiz, completedQuizzes };
     },
 
     eduflowMembers: async (
@@ -700,7 +811,7 @@ export const resolvers = {
         studentId: String(student._id),
         homeworkId: String(homework._id),
         channel: "sms",
-        message: `Edu Flow (dummy SMS): ${student.name} submitted "${homework.title}". Latest check: ${submission.aiScore ?? "—"}%.`,
+        message: `Edu Flow (жишээ SMS): ${student.name} "${homework.title}" даалгавраа илгээлээ. Сүүлийн дүн: ${submission.aiScore ?? "—"}%.`,
         status: "sent_dummy",
         createdAt: new Date(),
       });
@@ -774,6 +885,236 @@ export const resolvers = {
         ),
         "Lesson plan not found.",
       );
+    },
+
+    eduflowLogin: async (
+      _parent: unknown,
+      { email, password }: { email: string; password: string },
+      { models, user }: Context,
+    ) => {
+      requireUser(user);
+      await ensureDemoData(models);
+
+      const member = await models.EduflowMembers.findOne({
+        email: email.toLowerCase().trim(),
+      });
+
+      if (!member || password !== "123456") {
+        fail("И-мэйл эсвэл нууц үг буруу байна.", "UNAUTHENTICATED");
+      }
+
+      return { member };
+    },
+
+    eduflowStartQuiz: async (
+      _parent: unknown,
+      { studentId }: { studentId: string },
+      { models, user, checkPermission }: Context,
+    ) => {
+      requireUser(user);
+      await checkPermission(QUIZ_PLAY);
+      await ensureDemoData(models);
+
+      const member = required<IEduflowMemberDocument>(
+        await models.EduflowMembers.findById(studentId),
+        "Сурагч олдсонгүй.",
+      );
+
+      if (member.role !== "student") {
+        fail("Энэ хэсэг зөвхөн сурагчдад зориулагдсан.", "FORBIDDEN");
+      }
+
+      const existing = await models.EduflowQuizzes.findOne({
+        studentId,
+        status: "active",
+      });
+
+      if (existing) {
+        return existing;
+      }
+
+      const concepts = await models.EduflowConcepts.find({ studentId }).sort({
+        mastery: 1,
+      });
+      const weakest = required<IEduflowConceptDocument>(
+        concepts[0],
+        "Эхлээд сурах ойлголт бүртгэгдэх ёстой.",
+      );
+
+      return models.EduflowQuizzes.create({
+        studentId,
+        subject: weakest.subject,
+        topic: weakest.topic,
+        status: "active",
+        questions: buildQuizQuestions(weakest.topic),
+        answers: [],
+        correctStreak: 0,
+        bestStreak: 0,
+        currentDifficulty: 1,
+        xpEarned: 0,
+        createdAt: new Date(),
+      });
+    },
+
+    eduflowAnswerQuiz: async (
+      _parent: unknown,
+      {
+        quizId,
+        questionIndex,
+        selectedIndex,
+      }: { quizId: string; questionIndex: number; selectedIndex: number },
+      { models, user, checkPermission }: Context,
+    ) => {
+      requireUser(user);
+      await checkPermission(QUIZ_PLAY);
+
+      const quiz = required<IEduflowQuizDocument>(
+        await models.EduflowQuizzes.findById(quizId),
+        "Дасгал олдсонгүй.",
+      );
+
+      if (quiz.status !== "active") {
+        fail("Энэ дасгал аль хэдийн дууссан.", "BAD_USER_INPUT");
+      }
+
+      if (questionIndex !== quiz.answers.length) {
+        fail("Асуултын дараалал буруу байна.", "BAD_USER_INPUT");
+      }
+
+      const question = required<IEduflowQuizQuestion>(
+        quiz.questions[questionIndex],
+        "Асуулт олдсонгүй.",
+      );
+
+      if (
+        selectedIndex < 0 ||
+        selectedIndex >= question.options.length ||
+        !Number.isInteger(selectedIndex)
+      ) {
+        fail("Хариултаа зөв сонгоно уу.", "BAD_USER_INPUT");
+      }
+
+      const correct = selectedIndex === question.correctIndex;
+      const correctStreak = correct ? quiz.correctStreak + 1 : 0;
+
+      quiz.correctStreak = correctStreak;
+      quiz.bestStreak = Math.max(quiz.bestStreak, correctStreak);
+      quiz.currentDifficulty = correct
+        ? correctStreak >= 2
+          ? Math.min(3, quiz.currentDifficulty + 1)
+          : quiz.currentDifficulty
+        : Math.max(1, quiz.currentDifficulty - 1);
+      quiz.answers.push({ questionIndex, selectedIndex, correct });
+
+      const nextIndex = questionIndex + 1;
+
+      if (nextIndex < quiz.questions.length) {
+        const used = quiz.questions.map((item) => item.prompt);
+        const replacement = pickQuestion(
+          quiz.topic,
+          quiz.currentDifficulty,
+          used,
+        );
+
+        if (replacement) {
+          const target = required<IEduflowQuizQuestion>(
+            quiz.questions[nextIndex],
+            "Дараагийн асуулт олдсонгүй.",
+          );
+          target.prompt = replacement.prompt;
+          target.options = replacement.options;
+          target.correctIndex = replacement.correctIndex;
+          target.difficulty = replacement.difficulty;
+          target.explanation = replacement.explanation;
+        }
+      } else {
+        const total = quiz.questions.length;
+        const correctCount = quiz.answers.filter((answer) => answer.correct)
+          .length;
+        const xp = correctCount * 10 + (correctCount === total ? 20 : 0);
+
+        quiz.status = "completed";
+        quiz.completedAt = new Date();
+        quiz.xpEarned = xp;
+
+        const concept = await models.EduflowConcepts.findOne({
+          studentId: quiz.studentId,
+          topic: quiz.topic,
+        });
+
+        if (concept) {
+          const mastery = Math.max(
+            0,
+            Math.min(
+              100,
+              concept.mastery +
+                correctCount * 6 -
+                (total - correctCount) * 4,
+            ),
+          );
+
+          await models.EduflowConcepts.findByIdAndUpdate(concept._id, {
+            $set: { mastery, updatedAt: new Date() },
+            $inc: { attempts: total, correct: correctCount },
+          });
+        }
+
+        if (correctCount >= 3) {
+          const member = required<IEduflowMemberDocument>(
+            await models.EduflowMembers.findById(quiz.studentId),
+            "Сурагч олдсонгүй.",
+          );
+          const { streak } = await bumpStreak(models, member, xp);
+
+          if (member.parentId) {
+            await models.EduflowNotifications.create({
+              parentId: member.parentId,
+              studentId: String(member._id),
+              channel: "sms",
+              message: `Edu Flow: ${member.name} өнөөдрийн дасгалыг ${correctCount}/${total} гүйцэтгэж, ${streak} өдрийн цуврал үргэлжлүүллээ. 🔥`,
+              status: "sent_dummy",
+              createdAt: new Date(),
+            });
+          }
+        } else {
+          await models.EduflowMembers.findByIdAndUpdate(quiz.studentId, {
+            $inc: { points: xp },
+          });
+        }
+      }
+
+      await quiz.save();
+
+      return {
+        correct,
+        correctIndex: question.correctIndex,
+        explanation: question.explanation,
+        quiz,
+      };
+    },
+
+    eduflowResetDemo: async (
+      _parent: unknown,
+      _args: unknown,
+      { models, user, checkPermission }: Context,
+    ) => {
+      requireUser(user);
+      await checkPermission(DEMO_RESET);
+
+      await Promise.all([
+        models.EduflowMembers.deleteMany({}),
+        models.EduflowClasses.deleteMany({}),
+        models.EduflowHomework.deleteMany({}),
+        models.EduflowSubmissions.deleteMany({}),
+        models.EduflowLessonPlans.deleteMany({}),
+        models.EduflowNotifications.deleteMany({}),
+        models.EduflowConcepts.deleteMany({}),
+        models.EduflowQuizzes.deleteMany({}),
+      ]);
+
+      await ensureDemoData(models);
+
+      return true;
     },
   },
 
@@ -875,5 +1216,24 @@ export const resolvers = {
   EduflowMember: {
     lastCompletedDate: (parent: IEduflowMemberDocument) =>
       parent.lastCompletedDate?.toISOString() ?? null,
+  },
+
+  EduflowConcept: {
+    updatedAt: (parent: IEduflowConceptDocument) =>
+      parent.updatedAt?.toISOString() ?? null,
+  },
+
+  EduflowQuiz: {
+    currentQuestionIndex: (parent: IEduflowQuizDocument) =>
+      parent.answers.length,
+    totalQuestions: (parent: IEduflowQuizDocument) =>
+      parent.questions.length,
+    answeredCount: (parent: IEduflowQuizDocument) => parent.answers.length,
+    correctCount: (parent: IEduflowQuizDocument) =>
+      parent.answers.filter((answer) => answer.correct).length,
+    createdAt: (parent: IEduflowQuizDocument) =>
+      parent.createdAt?.toISOString() ?? null,
+    completedAt: (parent: IEduflowQuizDocument) =>
+      parent.completedAt?.toISOString() ?? null,
   },
 };

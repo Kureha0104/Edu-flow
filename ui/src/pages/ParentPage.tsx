@@ -10,11 +10,14 @@ import {
 import { useState } from "react";
 import { Button, cn } from "erxes-ui";
 import { NOTIFY_PARENT } from "~/graphql";
+import { useAuth } from "../auth/AuthContext";
+import { useEduflowDemo } from "../modules/eduflow/useDemo";
 import {
   AiNotice,
   Avatar,
   EmptyState,
   ErrorBanner,
+  PageHeading,
   ProgressBar,
   SectionCard,
   StatusPill,
@@ -23,7 +26,7 @@ import {
   formatDay,
   type Demo,
   type Member,
-} from "./ui";
+} from "../modules/eduflow/ui";
 
 const ChildSummary = ({
   child,
@@ -38,25 +41,25 @@ const ChildSummary = ({
 }) => (
   <div className="eduflow:rounded-2xl eduflow:border eduflow:border-edu-lav/25 eduflow:bg-gradient-to-br eduflow:from-edu-purple/25 eduflow:via-edu-card eduflow:to-edu-card eduflow:p-4">
     <div className="eduflow:flex eduflow:items-center eduflow:gap-3">
-      <Avatar name={child.name} size="lg" tone="lav" />
+      <Avatar name={child.name} size="lg" />
       <div className="eduflow:min-w-0">
         <h3 className="eduflow:text-base eduflow:font-semibold eduflow:text-white">
           {child.name}
         </h3>
         <p className="eduflow:text-[11px] eduflow:text-edu-text">
-          {child.grade ?? "Student"} · {child.email}
+          {child.grade ?? "Сурагч"} · {child.email}
         </p>
       </div>
       <div className="eduflow:ml-auto eduflow:flex eduflow:items-center eduflow:gap-1.5 eduflow:rounded-full eduflow:border eduflow:border-edu-lav/30 eduflow:bg-edu-bg/40 eduflow:px-3 eduflow:py-1 eduflow:text-xs eduflow:font-semibold eduflow:text-edu-lav">
         <IconFlame className="eduflow:size-4" />
-        {child.streak}d
+        {child.streak} өдөр
       </div>
     </div>
 
     <div className="eduflow:mt-4 eduflow:grid eduflow:grid-cols-3 eduflow:gap-2">
       <div className="eduflow:rounded-xl eduflow:bg-edu-bg/40 eduflow:px-3 eduflow:py-2">
         <p className="eduflow:text-[10px] eduflow:uppercase eduflow:tracking-wider eduflow:text-edu-text">
-          Done
+          Дууссан
         </p>
         <p className="eduflow:text-lg eduflow:font-semibold eduflow:text-edu-cyan">
           {approved}/{homeworks.length}
@@ -64,7 +67,7 @@ const ChildSummary = ({
       </div>
       <div className="eduflow:rounded-xl eduflow:bg-edu-bg/40 eduflow:px-3 eduflow:py-2">
         <p className="eduflow:text-[10px] eduflow:uppercase eduflow:tracking-wider eduflow:text-edu-text">
-          Pending
+          Хүлээгдэж буй
         </p>
         <p className="eduflow:text-lg eduflow:font-semibold eduflow:text-edu-blue">
           {pending}
@@ -72,17 +75,17 @@ const ChildSummary = ({
       </div>
       <div className="eduflow:rounded-xl eduflow:bg-edu-bg/40 eduflow:px-3 eduflow:py-2">
         <p className="eduflow:text-[10px] eduflow:uppercase eduflow:tracking-wider eduflow:text-edu-text">
-          XP
+          Оноо
         </p>
         <p className="eduflow:text-lg eduflow:font-semibold eduflow:text-edu-lav">
-          {child.points}
+          {child.points} XP
         </p>
       </div>
     </div>
 
     <div className="eduflow:mt-3">
       <div className="eduflow:flex eduflow:items-center eduflow:justify-between eduflow:text-[10px] eduflow:text-edu-text">
-        <span>Homework completion</span>
+        <span>Даалгаврын гүйцэтгэл</span>
         <span>
           {homeworks.length > 0
             ? Math.round((approved / homeworks.length) * 100)
@@ -100,23 +103,37 @@ const ChildSummary = ({
   </div>
 );
 
-export const ParentView = ({
-  demo,
-  refetch,
-}: {
-  demo: Demo;
-  refetch: () => Promise<unknown>;
-}) => {
-  const children = demo.students;
+export const ParentPage = () => {
+  const { session } = useAuth();
+  const parentId = session?.member._id;
+  const { demo, loading, error, refetch } = useEduflowDemo("parent", parentId);
   const [selectedId, setSelectedId] = useState<string>();
-  const [error, setError] = useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
   const [notifyParent] = useMutation(NOTIFY_PARENT);
 
+  if (!session) {
+    return null;
+  }
+
+  if (loading && !demo) {
+    return <div className="eduflow:h-40 eduflow:animate-pulse eduflow:rounded-2xl eduflow:bg-edu-card" />;
+  }
+
+  if (!demo) {
+    return (
+      <ErrorBanner
+        message={error?.message ?? "Хүүхдийн явц ачаалж чадсангүй."}
+        onRetry={() => void refetch()}
+      />
+    );
+  }
+
+  const children = demo.students;
   const child = children.find((item) => item._id === selectedId) ?? children[0];
 
   if (!child) {
-    return <EmptyState title="No children linked to this parent" />;
+    return <EmptyState title="Хүүхэд холбогдоогүй байна" />;
   }
 
   const childSubmissions = demo.submissions.filter(
@@ -135,18 +152,18 @@ export const ParentView = ({
 
   const sendTestSms = async () => {
     if (!latestSubmission) {
-      setError("There is no submission to send yet.");
+      setMessage("Илгээх илгээлт алга.");
       return;
     }
 
     setSending(true);
-    setError(null);
+    setMessage(null);
     try {
       await notifyParent({ variables: { submissionId: latestSubmission._id } });
       await refetch();
     } catch (cause) {
-      setError(
-        cause instanceof Error ? cause.message : "Could not queue the SMS.",
+      setMessage(
+        cause instanceof Error ? cause.message : "SMS бүртгэж чадсангүй.",
       );
     } finally {
       setSending(false);
@@ -155,37 +172,33 @@ export const ParentView = ({
 
   return (
     <div className="eduflow:grid eduflow:gap-5">
-      <div className="eduflow:flex eduflow:flex-wrap eduflow:items-center eduflow:justify-between eduflow:gap-3">
-        <div>
-          <p className="eduflow:text-[11px] eduflow:uppercase eduflow:tracking-widest eduflow:text-edu-text">
-            Parent dashboard
-          </p>
-          <h2 className="eduflow:text-lg eduflow:font-semibold eduflow:text-white">
-            {demo.parent?.name ?? "Parent"}, here is the week at a glance
-          </h2>
-        </div>
-        <div className="eduflow:flex eduflow:flex-wrap eduflow:gap-2">
-          {children.map((item) => (
-            <button
-              key={item._id}
-              type="button"
-              onClick={() => setSelectedId(item._id)}
-              className={cn(
-                "eduflow:flex eduflow:items-center eduflow:gap-2 eduflow:rounded-full eduflow:border eduflow:px-2.5 eduflow:py-1 eduflow:text-[11px] eduflow:transition",
-                item._id === child._id
-                  ? "eduflow:border-edu-lav/40 eduflow:bg-edu-purple/20 eduflow:text-white"
-                  : "eduflow:border-edu-border eduflow:bg-edu-card eduflow:text-edu-text hover:eduflow:border-edu-lav/30",
-              )}
-            >
-              <Avatar name={item.name} size="sm" />
-              {item.name}
-            </button>
-          ))}
-        </div>
+      <PageHeading
+        eyebrow="Эцэг эх"
+        title={`${session.member.name}, хүүхдийнхээ явцыг хараарай`}
+        description="Даалгаврын гүйцэтгэл, AI дүгнэлт, цуврал болон SMS мэдэгдлийг нэг дор."
+      />
+
+      <div className="eduflow:flex eduflow:flex-wrap eduflow:items-center eduflow:gap-2">
+        {children.map((item) => (
+          <button
+            key={item._id}
+            type="button"
+            onClick={() => setSelectedId(item._id)}
+            className={cn(
+              "eduflow:flex eduflow:items-center eduflow:gap-2 eduflow:rounded-full eduflow:border eduflow:px-2.5 eduflow:py-1 eduflow:text-[11px] eduflow:transition",
+              item._id === child._id
+                ? "eduflow:border-edu-lav/40 eduflow:bg-edu-purple/20 eduflow:text-white"
+                : "eduflow:border-edu-border eduflow:bg-edu-card eduflow:text-edu-text hover:eduflow:border-edu-lav/30",
+            )}
+          >
+            <Avatar name={item.name} size="sm" />
+            {item.name}
+          </button>
+        ))}
       </div>
 
       <AiNotice />
-      {error && <ErrorBanner message={error} />}
+      {message && <ErrorBanner message={message} />}
 
       <div className="eduflow:grid eduflow:gap-5 eduflow:xl:grid-cols-[0.9fr_1.1fr]">
         <div className="eduflow:grid eduflow:gap-5">
@@ -197,8 +210,8 @@ export const ParentView = ({
           />
 
           <SectionCard
-            title="SMS updates"
-            description="A dummy bot stands in for Twilio. Messages are stored here, not sent."
+            title="SMS мэдэгдэл"
+            description="Жишээ бот. Мессежүүд энд бүртгэгдэнэ, бодитоор илгээгдэхгүй."
             action={
               <Button
                 type="button"
@@ -208,20 +221,20 @@ export const ParentView = ({
                 onClick={sendTestSms}
               >
                 <IconMessage className="eduflow:size-4" />
-                {sending ? "Queueing…" : "Send test SMS"}
+                {sending ? "Бүртгэж байна…" : "Жишээ SMS"}
               </Button>
             }
           >
             <div className="eduflow:mb-3 eduflow:flex eduflow:items-center eduflow:gap-2 eduflow:rounded-xl eduflow:border eduflow:border-edu-border eduflow:bg-edu-card2/60 eduflow:px-3 eduflow:py-2 eduflow:text-[11px] eduflow:text-edu-text">
               <IconPhone className="eduflow:size-4 eduflow:text-edu-cyan" />
-              {demo.parent?.phone ?? "No phone on file"} ·{" "}
-              <span className="eduflow:text-edu-cyan">dummy channel</span>
+              {demo.parent?.phone ?? "Утас бүртгэгдээгүй"} ·{" "}
+              <span className="eduflow:text-edu-cyan">жишээ суваг</span>
             </div>
 
             {notifications.length === 0 ? (
               <EmptyState
-                title="No messages yet"
-                description="Finish a homework or queue a test SMS."
+                title="Мэдэгдэл алга"
+                description="Даалгавар дуусах эсвэл жишээ SMS илгээхэд энд харагдана."
               />
             ) : (
               <div className="eduflow:grid eduflow:gap-2">
@@ -242,7 +255,7 @@ export const ParentView = ({
                         {formatDate(notification.createdAt)}
                       </span>
                       <span className="eduflow:rounded-full eduflow:bg-edu-cyan/10 eduflow:px-2 eduflow:py-0.5 eduflow:text-edu-cyan">
-                        sent (dummy)
+                        илгээсэн (жишээ)
                       </span>
                     </div>
                   </div>
@@ -253,11 +266,11 @@ export const ParentView = ({
         </div>
 
         <SectionCard
-          title={`${child.name}’s homework`}
-          description="Live status from the teacher’s assignment list."
+          title={`${child.name}-ийн даалгавар`}
+          description="Багшийн даалгаврын жагсаалтаас шууд шинэчлэгдэнэ."
         >
           {demo.homeworks.length === 0 ? (
-            <EmptyState title="No homework assigned" />
+            <EmptyState title="Даалгавар алга" />
           ) : (
             <div className="eduflow:grid eduflow:gap-2.5">
               {demo.homeworks.map((homework) => {
@@ -289,9 +302,9 @@ export const ParentView = ({
                         status={status}
                         label={
                           status === "todo"
-                            ? "Not submitted"
+                            ? "Илгээгээгүй"
                             : status === "approved"
-                              ? "Done"
+                              ? "Дууссан"
                               : undefined
                         }
                       />
@@ -306,7 +319,7 @@ export const ParentView = ({
                     {submission?.status === "approved" && (
                       <p className="eduflow:mt-2 eduflow:flex eduflow:items-center eduflow:gap-1 eduflow:text-[10px] eduflow:text-edu-cyan">
                         <IconCheck className="eduflow:size-3.5" />
-                        Marked done
+                        Дууссан
                         {submission.completedAt
                           ? ` · ${formatDate(submission.completedAt)}`
                           : ""}

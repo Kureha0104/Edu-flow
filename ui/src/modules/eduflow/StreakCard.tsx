@@ -19,19 +19,19 @@ export const StreakCard = ({ member }: { member: Member }) => {
         <div className="eduflow:flex eduflow:items-center eduflow:gap-4">
           <div className="eduflow:relative eduflow:flex eduflow:size-20 eduflow:items-center eduflow:justify-center eduflow:rounded-2xl eduflow:bg-edu-bg/50 eduflow:ring-1 eduflow:ring-edu-lav/30">
             <IconFlame className="eduflow:size-10 eduflow:text-edu-lav eduflow:drop-shadow-[0_0_12px_#7C3AED]" />
-            <span className="eduflow:absolute -bottom-2 eduflow:rounded-full eduflow:border eduflow:border-edu-lav/30 eduflow:bg-edu-bg eduflow:px-2 eduflow:py-0.5 eduflow:text-[10px] eduflow:font-semibold eduflow:text-edu-lav">
-              {member.streak} day{member.streak === 1 ? "" : "s"}
+            <span className="eduflow:absolute eduflow:-bottom-2 eduflow:rounded-full eduflow:border eduflow:border-edu-lav/30 eduflow:bg-edu-bg eduflow:px-2 eduflow:py-0.5 eduflow:text-[10px] eduflow:font-semibold eduflow:text-edu-lav">
+              {member.streak} өдөр
             </span>
           </div>
           <div>
             <p className="eduflow:text-[11px] eduflow:font-medium eduflow:uppercase eduflow:tracking-widest eduflow:text-edu-text">
-              Current streak
+              Одоогийн цуврал
             </p>
             <h2 className="eduflow:mt-1 eduflow:text-2xl eduflow:font-semibold eduflow:text-white">
-              {member.name}, keep it alive!
+              {member.name}, үргэлжлүүлээрэй!
             </h2>
             <p className="eduflow:mt-1 eduflow:text-xs eduflow:text-edu-text">
-              Longest streak {member.longestStreak} days · {member.points} XP
+              Хамгийн урт цуврал {member.longestStreak} өдөр · {member.points} XP
             </p>
           </div>
         </div>
@@ -57,14 +57,14 @@ export const StreakCard = ({ member }: { member: Member }) => {
           <div className="eduflow:flex eduflow:items-center eduflow:justify-between eduflow:text-[11px] eduflow:text-edu-text">
             <span className="eduflow:flex eduflow:items-center eduflow:gap-1.5">
               <IconTrophy className="eduflow:size-3.5 eduflow:text-edu-cyan" />
-              Level {level}
+              Түвшин {level}
             </span>
-            <span>{levelProgress}/150 XP to level {level + 1}</span>
+            <span>{levelProgress}/150 XP · дараагийн түвшин {level + 1}</span>
           </div>
           <ProgressBar value={levelProgress} max={150} className="eduflow:mt-1.5" />
         </div>
         <div className="eduflow:rounded-xl eduflow:border eduflow:border-edu-cyan/20 eduflow:bg-edu-cyan/5 eduflow:px-3 eduflow:py-2 eduflow:text-[11px] eduflow:text-edu-cyan">
-          Finish today’s homework to extend the streak
+          Өнөөдрийн даалгавраа хийж цувралаа үргэлжлүүлээрэй
         </div>
       </div>
     </section>

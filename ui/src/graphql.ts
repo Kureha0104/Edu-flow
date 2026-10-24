@@ -250,21 +250,156 @@ export const UPDATE_LESSON_PLAN_STATUS = gql(`
   }
 `);
 
-export const STUDENTS_QUERY = gql(`
-  query eduflowStudents {
-    eduflowMembers(role: "student") {
-      _id
-      name
-      email
-      role
-      phone
-      grade
-      avatar
-      parentId
-      streak
-      longestStreak
-      points
-      lastCompletedDate
+export const LOGIN = gql(`
+  mutation eduflowLogin($email: String!, $password: String!) {
+    eduflowLogin(email: $email, password: $password) {
+      member {
+        _id
+        name
+        email
+        role
+        phone
+        grade
+        avatar
+        parentId
+        streak
+        longestStreak
+        points
+        lastCompletedDate
+      }
     }
+  }
+`);
+
+export const PRACTICE_QUERY = gql(`
+  query eduflowPractice($studentId: String!) {
+    eduflowPractice(studentId: $studentId) {
+      member {
+        _id
+        name
+        email
+        role
+        phone
+        grade
+        avatar
+        parentId
+        streak
+        longestStreak
+        points
+        lastCompletedDate
+      }
+      concepts {
+        _id
+        studentId
+        subject
+        topic
+        mastery
+        attempts
+        correct
+        updatedAt
+      }
+      activeQuiz {
+        ...EduflowQuizFields
+      }
+      completedQuizzes {
+        ...EduflowQuizFields
+      }
+    }
+  }
+
+  fragment EduflowQuizFields on EduflowQuiz {
+    _id
+    studentId
+    subject
+    topic
+    status
+    questions {
+      prompt
+      options
+      difficulty
+    }
+    currentQuestionIndex
+    correctStreak
+    bestStreak
+    currentDifficulty
+    xpEarned
+    totalQuestions
+    answeredCount
+    correctCount
+    createdAt
+    completedAt
+  }
+`);
+
+export const START_QUIZ = gql(`
+  mutation eduflowStartQuiz($studentId: String!) {
+    eduflowStartQuiz(studentId: $studentId) {
+      _id
+      studentId
+      subject
+      topic
+      status
+      questions {
+        prompt
+        options
+        difficulty
+      }
+      currentQuestionIndex
+      correctStreak
+      bestStreak
+      currentDifficulty
+      xpEarned
+      totalQuestions
+      answeredCount
+      correctCount
+      createdAt
+      completedAt
+    }
+  }
+`);
+
+export const ANSWER_QUIZ = gql(`
+  mutation eduflowAnswerQuiz(
+    $quizId: String!
+    $questionIndex: Int!
+    $selectedIndex: Int!
+  ) {
+    eduflowAnswerQuiz(
+      quizId: $quizId
+      questionIndex: $questionIndex
+      selectedIndex: $selectedIndex
+    ) {
+      correct
+      correctIndex
+      explanation
+      quiz {
+        _id
+        studentId
+        subject
+        topic
+        status
+        questions {
+          prompt
+          options
+          difficulty
+        }
+        currentQuestionIndex
+        correctStreak
+        bestStreak
+        currentDifficulty
+        xpEarned
+        totalQuestions
+        answeredCount
+        correctCount
+        createdAt
+        completedAt
+      }
+    }
+  }
+`);
+
+export const RESET_DEMO = gql(`
+  mutation eduflowResetDemo {
+    eduflowResetDemo
   }
 `);

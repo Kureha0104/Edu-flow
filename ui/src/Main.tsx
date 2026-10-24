@@ -1,28 +1,78 @@
 import "./styles.css";
-import { lazy, Suspense } from "react";
-import { Route, Routes } from "react-router";
+import type { ReactNode } from "react";
+import { Navigate, Route, Routes } from "react-router";
 import { AppLayout } from "erxes-ui";
 import manifest from "../../erxes.json" with { type: "json" };
+import { AuthProvider, rolePath, useAuth, type SessionRole } from "./auth/AuthContext";
+import { LoginPage } from "./auth/LoginPage";
 import { Navigation } from "./modules/Navigation";
+import { ParentPage } from "./pages/ParentPage";
+import { SettingsPage } from "./pages/SettingsPage";
+import { StudentHomePage } from "./pages/StudentHomePage";
+import { StudentHomeworkPage } from "./pages/StudentHomeworkPage";
+import { StudentPracticePage } from "./pages/StudentPracticePage";
+import { TeacherHomePage } from "./pages/TeacherHomePage";
+import { TeacherHomeworkPage } from "./pages/TeacherHomeworkPage";
+import { TeacherPlansPage } from "./pages/TeacherPlansPage";
 
-const IndexPage = lazy(() =>
-  import("./pages/IndexPage").then((module) => ({
-    default: module.IndexPage,
-  })),
-);
-const SettingsPage = lazy(() =>
-  import("./pages/SettingsPage").then((module) => ({ default: module.SettingsPage })),
-);
+const RoleHome = () => {
+  const { session } = useAuth();
+  return <Navigate to={rolePath(session?.member.role ?? "teacher")} replace />;
+};
+
+const RoleGate = ({
+  role,
+  children,
+}: {
+  role: SessionRole;
+  children: ReactNode;
+}) => {
+  const { session } = useAuth();
+
+  if (!session) {
+    return <LoginPage />;
+  }
+
+  if (session.member.role !== role) {
+    return <Navigate to={rolePath(session.member.role)} replace />;
+  }
+
+  return <>{children}</>;
+};
+
+const Shell = () => {
+  const { session } = useAuth();
+
+  if (!session) {
+    return <LoginPage />;
+  }
+
+  return (
+    <AppLayout
+      id={manifest.name}
+      title={manifest.title}
+      sidebar={<Navigation />}
+    >
+      <Routes>
+        <Route index element={<RoleHome />} />
+        <Route path="teacher" element={<RoleGate role="teacher"><TeacherHomePage /></RoleGate>} />
+        <Route path="teacher/homework" element={<RoleGate role="teacher"><TeacherHomeworkPage /></RoleGate>} />
+        <Route path="teacher/plans" element={<RoleGate role="teacher"><TeacherPlansPage /></RoleGate>} />
+        <Route path="student" element={<RoleGate role="student"><StudentHomePage /></RoleGate>} />
+        <Route path="student/homework" element={<RoleGate role="student"><StudentHomeworkPage /></RoleGate>} />
+        <Route path="student/practice" element={<RoleGate role="student"><StudentPracticePage /></RoleGate>} />
+        <Route path="parent" element={<RoleGate role="parent"><ParentPage /></RoleGate>} />
+        <Route path="settings" element={<SettingsPage />} />
+        <Route path="*" element={<RoleHome />} />
+      </Routes>
+    </AppLayout>
+  );
+};
 
 // core-ui mounts this component at `/<path>/*`; routes below are relative to
 // it. It resolves the component by the PascalCase expose name.
 export const Eduflow = () => (
-  <AppLayout id={manifest.name} title={manifest.title} sidebar={<Navigation />}>
-    <Suspense fallback={<div role="status">Loading…</div>}>
-      <Routes>
-        <Route index element={<IndexPage />} />
-        <Route path="settings" element={<SettingsPage />} />
-      </Routes>
-    </Suspense>
-  </AppLayout>
+  <AuthProvider>
+    <Shell />
+  </AuthProvider>
 );

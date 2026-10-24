@@ -166,17 +166,19 @@ homework (`eduflowHomeworkRead`, `eduflowHomeworkManage`), submissions
 (`eduflowSubmissionRead`, `eduflowSubmissionCreate`,
 `eduflowSubmissionReview`), lesson plans (`eduflowLessonPlanRead`,
 `eduflowLessonPlanManage`, `eduflowLessonPlanApprove`) and parent
-notifications (`eduflowNotificationRead`, `eduflowNotificationSend`).
+notifications (`eduflowNotificationRead`, `eduflowNotificationSend`) and
+adaptive practice (`eduflowQuizRead`, `eduflowQuizPlay`, `eduflowDemoReset`).
 `main.ts` registers the config as `meta.permissions`, and every resolver calls
 `await checkPermission(action)` after validating the signed-in user and tenant.
 
 The demo school is seeded on first `eduflowDemo` and stored in tenant-scoped
 collections (`eduflow_members`, `eduflow_classes`, `eduflow_homework`,
-`eduflow_submissions`, `eduflow_lesson_plans`, `eduflow_notifications`). The
-**Teacher / Student / Parent** switcher in the UI is a presentation-only demo;
-the signed-in owner bypasses permission checks locally. Production role mapping
-must grant the actions above to real erxes users and remove the switcher's demo
-assumption.
+`eduflow_submissions`, `eduflow_lesson_plans`, `eduflow_notifications`,
+`eduflow_concepts`, `eduflow_quizzes`). The UI has a plugin-local login screen
+(`eduflowLogin`) that stores a demo session and routes each role to its own
+screens. The erxes user underneath is still the local owner, so this is
+presentation-level separation; production must map real erxes users to the
+above actions, remove the demo password, and enforce the role in the API.
 
 Photo checks are deterministic mocks in `runMockAi`; approval updates the
 student's streak/XP and writes a `sent_dummy` notification. Replace the mock

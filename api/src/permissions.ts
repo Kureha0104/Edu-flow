@@ -12,6 +12,9 @@ export const LESSON_PLAN_MANAGE = "eduflowLessonPlanManage";
 export const LESSON_PLAN_APPROVE = "eduflowLessonPlanApprove";
 export const NOTIFICATION_READ = "eduflowNotificationRead";
 export const NOTIFICATION_SEND = "eduflowNotificationSend";
+export const QUIZ_READ = "eduflowQuizRead";
+export const QUIZ_PLAY = "eduflowQuizPlay";
+export const DEMO_RESET = "eduflowDemoReset";
 
 const allScope = {
   name: "all" as const,
@@ -89,6 +92,25 @@ export const permissions: IPermissionConfig = {
       ],
     },
     {
+      name: "eduflowQuiz",
+      description: `${manifest.title} adaptive practice quizzes`,
+      scopeField: null,
+      ownerFields: [],
+      scopes: [allScope],
+      actions: [
+        {
+          name: QUIZ_READ,
+          title: "Read practice quizzes",
+          description: `View ${manifest.title} weak concepts and quiz history`,
+        },
+        {
+          name: QUIZ_PLAY,
+          title: "Play practice quizzes",
+          description: `Start and answer ${manifest.title} adaptive quizzes`,
+        },
+      ],
+    },
+    {
       name: "eduflowNotifications",
       description: `${manifest.title} parent notifications`,
       scopeField: null,
@@ -104,6 +126,11 @@ export const permissions: IPermissionConfig = {
           name: NOTIFICATION_SEND,
           title: "Notify parents",
           description: `Send ${manifest.title} parent notifications`,
+        },
+        {
+          name: DEMO_RESET,
+          title: "Reset demo data",
+          description: `Reset ${manifest.title} demo school data`,
         },
       ],
     },

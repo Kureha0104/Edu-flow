@@ -32,24 +32,24 @@ export const ensureDemoData = async (models: IModels) => {
   }
 
   const teacher = await models.EduflowMembers.create({
-    name: "Ms. Sara",
+    name: "Сара багш",
     email: "sara.teacher@school.eduflow.local",
     role: "teacher",
-    grade: "Grade 5",
+    grade: "5А",
   });
 
   const parent = await models.EduflowMembers.create({
-    name: "Mrs. Tuya",
+    name: "Хатагтай Туяа",
     email: "tuya.parent@example.com",
     role: "parent",
     phone: "+976 9911 2233",
   });
 
   const anu = await models.EduflowMembers.create({
-    name: "Anu",
+    name: "Ану",
     email: "anu.5a@school.eduflow.local",
     role: "student",
-    grade: "Grade 5A",
+    grade: "5А анги",
     parentId: String(parent._id),
     streak: 6,
     longestStreak: 9,
@@ -58,10 +58,10 @@ export const ensureDemoData = async (models: IModels) => {
   });
 
   const bilguun = await models.EduflowMembers.create({
-    name: "Bilguun",
+    name: "Билгүүн",
     email: "bilguun.5a@school.eduflow.local",
     role: "student",
-    grade: "Grade 5A",
+    grade: "5А анги",
     parentId: String(parent._id),
     streak: 2,
     longestStreak: 4,
@@ -70,10 +70,10 @@ export const ensureDemoData = async (models: IModels) => {
   });
 
   const sarnai = await models.EduflowMembers.create({
-    name: "Sarnai",
+    name: "Сарнай",
     email: "sarnai.5a@school.eduflow.local",
     role: "student",
-    grade: "Grade 5A",
+    grade: "5А анги",
     parentId: String(parent._id),
     streak: 0,
     longestStreak: 1,
@@ -81,9 +81,9 @@ export const ensureDemoData = async (models: IModels) => {
   });
 
   const classroom = await models.EduflowClasses.create({
-    name: "Grade 5A",
-    code: "5A-MATH",
-    subject: "Mathematics",
+    name: "5А анги",
+    code: "5А-МАТ",
+    subject: "Математик",
     teacherId: String(teacher._id),
     studentIds: [String(anu._id), String(bilguun._id), String(sarnai._id)],
   });
@@ -92,41 +92,41 @@ export const ensureDemoData = async (models: IModels) => {
     {
       classId: String(classroom._id),
       teacherId: String(teacher._id),
-      title: "Fractions: equivalent fractions",
-      subject: "Mathematics",
+      title: "Бутархай: тэнцүү бутархай",
+      subject: "Математик",
       objectives:
-        "Students can identify and generate equivalent fractions using models.",
+        "Сурагчид загвар ашиглан тэнцүү бутархайг таньж, үүсгэж чадна.",
       content:
-        "Warm-up on halves and quarters, guided practice with fraction strips, pair work on the worksheet, exit ticket.",
-      materials: "Fraction strips, whiteboard, worksheet 5A-12",
-      assessment: "Exit ticket with 3 equivalent-fraction problems",
+        "Хагас, дөрөвний нэгээр халаалт, бутархайн загвараар чиглэсэн дасгал, ажлын хуудсаар хосоор ажиллах, гарах тасалбар.",
+      materials: "Бутархайн загвар, самбар, 5А-12 ажлын хуудас",
+      assessment: "3 тэнцүү бутархайн бодлоготой гарах тасалбар",
       status: "approved",
       approvedAt: daysFromNow(-2),
     },
     {
       classId: String(classroom._id),
       teacherId: String(teacher._id),
-      title: "Reading: finding the main idea",
-      subject: "Reading",
+      title: "Унших: гол санаа олох",
+      subject: "Унших",
       objectives:
-        "Students can state the main idea and two supporting details of a short text.",
+        "Сурагчид богино текстийн гол санаа болон хоёр дэмжих дэлгэрэнгүйг хэлж чадна.",
       content:
-        "Read a short fable together, annotate key sentences, complete a main-idea graphic organiser.",
-      materials: "Fable handout, highlighters, graphic organiser",
-      assessment: "Main-idea organiser and one-paragraph summary",
+        "Богино үлгэрийг хамт уншиж, чухал өгүүлбэрийг тэмдэглэж, гол санааны график зохион байгуулагчийг бөглөнө.",
+      materials: "Үлгэрийн хуудас, маркер, график зохион байгуулагч",
+      assessment: "Гол санааны зохион байгуулагч, нэг догол мөрийн хураангуй",
       status: "review",
     },
     {
       classId: String(classroom._id),
       teacherId: String(teacher._id),
-      title: "Science: observing plant growth",
-      subject: "Science",
+      title: "Байгаль: ургамлын өсөлтийг ажиглах",
+      subject: "Байгаль",
       objectives:
-        "Students record daily observations of a bean plant and describe change over time.",
+        "Сурагчид шошны ургамлын өдөр тутмын ажиглалтыг бичиж, цаг хугацааны өөрчлөлтийг тайлбарлана.",
       content:
-        "Set up bean cups, measure the stem, record day 1 observations in the science journal.",
-      materials: "Bean seeds, cups, soil, rulers, science journals",
-      assessment: "Labelled drawing and three-sentence observation",
+        "Шошны аяга бэлдэж, ишийг хэмжиж, 1 дэх өдрийн ажиглалтыг байгалийн өдрийн тэмдэглэлд бичнэ.",
+      materials: "Шошны үр, аяга, хөрс, захирагч, байгалийн өдрийн тэмдэглэл",
+      assessment: "Шошготой зураг, гурван өгүүлбэрийн ажиглалт",
       status: "draft",
     },
   ]);
@@ -134,10 +134,10 @@ export const ensureDemoData = async (models: IModels) => {
   const fractions = await models.EduflowHomework.create({
     classId: String(classroom._id),
     teacherId: String(teacher._id),
-    title: "Fractions worksheet",
+    title: "Бутархайн дасгал",
     description:
-      "Complete questions 1–6 on worksheet 5A-12. Show the working for each equivalent fraction.",
-    subject: "Mathematics",
+      "5А-12 ажлын хуудасны 1–6 бодлогыг гүйцэтгэ. Тэнцүү бутархай бүрийн бодолтыг харуул.",
+    subject: "Математик",
     dueDate: daysFromNow(1),
     points: 20,
   });
@@ -145,10 +145,10 @@ export const ensureDemoData = async (models: IModels) => {
   const reading = await models.EduflowHomework.create({
     classId: String(classroom._id),
     teacherId: String(teacher._id),
-    title: "Reading comprehension",
+    title: "Унших ойлголт",
     description:
-      "Read the fable on page 14 and write the main idea plus two supporting details.",
-    subject: "Reading",
+      "14 дэх хуудасны үлгэрийг уншиж, гол санаа болон хоёр дэмжих дэлгэрэнгүйг бич.",
+    subject: "Унших",
     dueDate: daysFromNow(3),
     points: 15,
   });
@@ -156,10 +156,10 @@ export const ensureDemoData = async (models: IModels) => {
   await models.EduflowHomework.create({
     classId: String(classroom._id),
     teacherId: String(teacher._id),
-    title: "Science observation",
+    title: "Байгалийн ажиглалт",
     description:
-      "Draw your bean plant and write three sentences about what changed since yesterday.",
-    subject: "Science",
+      "Шошны ургамлаа зурж, өчигдрөөс хойш юу өөрчлөгдсөнийг гурван өгүүлбэрээр бич.",
+    subject: "Байгаль",
     dueDate: daysFromNow(-1),
     points: 10,
   });
@@ -167,7 +167,7 @@ export const ensureDemoData = async (models: IModels) => {
   await models.EduflowSubmissions.create({
     homeworkId: String(fractions._id),
     studentId: String(anu._id),
-    imageData: demoPage("Fractions — Anu", [
+    imageData: demoPage("Бутархай — Ану", [
       "1) 1/2 = 2/4 = 4/8",
       "2) 2/3 = 4/6 = 8/12",
       "3) 3/4 = 6/8 = 9/12",
@@ -178,7 +178,7 @@ export const ensureDemoData = async (models: IModels) => {
     status: "approved",
     aiScore: 92,
     aiFeedback:
-      "All six answers are correct, and the working is easy to follow. Great job simplifying question 6!",
+      "Зургаан хариулт бүгд зөв, бодолт нь ойлгомжтой. 6-р бодлогыг хялбарчилсан нь сайн байна!",
     submittedAt: daysFromNow(-1),
     completedAt: daysFromNow(-1),
   });
@@ -186,7 +186,7 @@ export const ensureDemoData = async (models: IModels) => {
   await models.EduflowSubmissions.create({
     homeworkId: String(fractions._id),
     studentId: String(bilguun._id),
-    imageData: demoPage("Fractions — Bilguun", [
+    imageData: demoPage("Бутархай — Билгүүн", [
       "1) 1/2 = 2/4",
       "2) 2/3 = 4/6",
       "3) 3/4 = 6/8",
@@ -197,22 +197,22 @@ export const ensureDemoData = async (models: IModels) => {
     status: "ai_checked",
     aiScore: 78,
     aiFeedback:
-      "Questions 1–5 look good. Question 6 is unfinished — simplify 6/8 by dividing both numbers by 2.",
+      "1–5 бодлого сайн байна. 6-р бодлого дуусаагүй — 6/8-ын хүртвэр, хуваарийг 2-оор хувааж хялбарчил.",
     submittedAt: daysFromNow(0),
   });
 
   await models.EduflowSubmissions.create({
     homeworkId: String(reading._id),
     studentId: String(anu._id),
-    imageData: demoPage("Reading — Anu", [
-      "Main idea: A clever fox teaches a crow a lesson.",
-      "Detail 1: The crow had a piece of cheese.",
-      "Detail 2: The fox flattered the crow to make it sing.",
+    imageData: demoPage("Унших — Ану", [
+      "Гол санаа: Ухаант үнэг хэрээд сургамж өгдөг.",
+      "Дэлгэрэнгүй 1: Хэрээнд нэг хэсэг бяслаг байв.",
+      "Дэлгэрэнгүй 2: Үнэг хэрээг магтан дуулуулав.",
     ]),
     status: "needs_work",
     aiScore: 72,
     aiFeedback:
-      "Your main idea is close, but detail 2 retells the story instead of supporting the main idea. Try explaining how the fox's flattery solved the problem.",
+      "Гол санаа чинь ойролцоо байна, гэхдээ 2-р дэлгэрэнгүй гол санааг дэмжихийн оронд түүхийг дахин өгүүлж байна. Үнэгний магтаал бодлогыг хэрхэн шийдсэнийг тайлбарлаж үзээрэй.",
     submittedAt: daysFromNow(-1),
   });
 
@@ -222,10 +222,85 @@ export const ensureDemoData = async (models: IModels) => {
     homeworkId: String(fractions._id),
     channel: "sms",
     message:
-      "Edu Flow: Anu completed Fractions worksheet with 92% and is on a 6-day streak. 🔥",
+      "Edu Flow: Ану Бутархайн дасгалыг 92% гүйцэтгэж, 6 өдрийн цуврал үргэлжлүүллээ. 🔥",
     status: "sent_dummy",
     createdAt: daysFromNow(-1),
   });
+
+  await models.EduflowConcepts.create([
+    {
+      studentId: String(anu._id),
+      subject: "Математик",
+      topic: "Бутархай",
+      mastery: 62,
+      attempts: 12,
+      correct: 8,
+    },
+    {
+      studentId: String(anu._id),
+      subject: "Унших",
+      topic: "Унших ойлголт",
+      mastery: 48,
+      attempts: 9,
+      correct: 4,
+    },
+    {
+      studentId: String(anu._id),
+      subject: "Байгаль",
+      topic: "Ажиглалт",
+      mastery: 70,
+      attempts: 6,
+      correct: 4,
+    },
+    {
+      studentId: String(bilguun._id),
+      subject: "Математик",
+      topic: "Бутархай",
+      mastery: 40,
+      attempts: 10,
+      correct: 4,
+    },
+    {
+      studentId: String(bilguun._id),
+      subject: "Унших",
+      topic: "Унших ойлголт",
+      mastery: 66,
+      attempts: 8,
+      correct: 5,
+    },
+    {
+      studentId: String(bilguun._id),
+      subject: "Байгаль",
+      topic: "Ажиглалт",
+      mastery: 55,
+      attempts: 5,
+      correct: 3,
+    },
+    {
+      studentId: String(sarnai._id),
+      subject: "Математик",
+      topic: "Бутархай",
+      mastery: 30,
+      attempts: 7,
+      correct: 2,
+    },
+    {
+      studentId: String(sarnai._id),
+      subject: "Унших",
+      topic: "Унших ойлголт",
+      mastery: 45,
+      attempts: 6,
+      correct: 3,
+    },
+    {
+      studentId: String(sarnai._id),
+      subject: "Байгаль",
+      topic: "Ажиглалт",
+      mastery: 60,
+      attempts: 4,
+      correct: 2,
+    },
+  ]);
 
   return true;
 };

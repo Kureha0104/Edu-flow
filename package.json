@@ -1,0 +1,31 @@
+{
+  "name": "eduflow",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "api",
+    "ui"
+  ],
+  "scripts": {
+    "dev:api": "npm run dev -w eduflow_api",
+    "dev:ui": "npm run codegen && npm run dev -w eduflow_ui",
+    "codegen": "npm run schema:print -w eduflow_api && npm run codegen -w eduflow_ui",
+    "build": "npm run codegen && npm run build -w eduflow_api && npm run build -w eduflow_ui",
+    "check": "npm run codegen && npm run check -w eduflow_api && npm run check -w eduflow_ui",
+    "lint": "oxlint",
+    "fmt": "oxfmt"
+  },
+  "devDependencies": {
+    "oxfmt": "^0.71.0",
+    "oxlint": "^1.86.0"
+  },
+  "overrides": {
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "@sentry/node": "10.76.2",
+    "@opentelemetry/api": "1.9.1",
+    "@opentelemetry/instrumentation": "0.220.0",
+    "@opentelemetry/sdk-trace-base": "2.12.0"
+  }
+}

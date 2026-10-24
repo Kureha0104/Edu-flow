@@ -48,7 +48,15 @@ const Shell = () => {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    scrollRef.current?.scrollTo({ top: 0 });
+    let node: HTMLElement | null = scrollRef.current;
+    while (node) {
+      node.scrollTop = 0;
+      node = node.parentElement;
+    }
+    window.scrollTo(0, 0);
+    if (document.scrollingElement) {
+      document.scrollingElement.scrollTop = 0;
+    }
   }, [location.pathname]);
 
   if (!session) {

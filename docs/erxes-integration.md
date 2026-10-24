@@ -161,21 +161,26 @@ including dashes. The normalized container `eduflow_ui` is only a loading key;
 it must never replace that public permission identity.
 Enforce access in the API resolvers, never only in the UI.
 
-On the platform stack, `api/src/permissions.ts` declares
-`eduflowSamplesRead` and `main.ts` registers it as `meta.permissions`.
-The sample list requires a user, a tenant and `await checkPermission(action)`
-before reading `context.models.Samples`. An administrator must grant the
-sample module's read action with `all` scope (or use an owner account). There
-are no automatic default grants. `all` means this tenant only: the model
-factory selects the tenant's database. The example deliberately does not
-advertise own/group scopes without implementing corresponding row filters.
+On the platform stack, `api/src/permissions.ts` declares granular actions for
+homework (`eduflowHomeworkRead`, `eduflowHomeworkManage`), submissions
+(`eduflowSubmissionRead`, `eduflowSubmissionCreate`,
+`eduflowSubmissionReview`), lesson plans (`eduflowLessonPlanRead`,
+`eduflowLessonPlanManage`, `eduflowLessonPlanApprove`) and parent
+notifications (`eduflowNotificationRead`, `eduflowNotificationSend`).
+`main.ts` registers the config as `meta.permissions`, and every resolver calls
+`await checkPermission(action)` after validating the signed-in user and tenant.
 
-The sample query accepts `limit` (default 20, range 1–100) and `offset`
-(default 0, range 0–10000), applies both in Mongo and sorts by `createdAt` and
-`_id`. The platform UI shows loading, denied/error, empty and paginated states.
-The status query is a diagnostic and does not read sample data. Standalone
-frameworks provide only the diagnostic query; add real authorization before
-adding application data.
+The demo school is seeded on first `eduflowDemo` and stored in tenant-scoped
+collections (`eduflow_members`, `eduflow_classes`, `eduflow_homework`,
+`eduflow_submissions`, `eduflow_lesson_plans`, `eduflow_notifications`). The
+**Teacher / Student / Parent** switcher in the UI is a presentation-only demo;
+the signed-in owner bypasses permission checks locally. Production role mapping
+must grant the actions above to real erxes users and remove the switcher's demo
+assumption.
+
+Photo checks are deterministic mocks in `runMockAi`; approval updates the
+student's streak/XP and writes a `sent_dummy` notification. Replace the mock
+with a vision service and an SMS provider without changing the resolver flow.
 
 ## Trusted gateway boundary
 

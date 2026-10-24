@@ -1,14 +1,28 @@
 import type { IMainContext } from "erxes-api-shared/core-types";
 import { createGenerateModels } from "erxes-api-shared/utils";
-import type { Connection } from "mongoose";
+import type { Connection, Model } from "mongoose";
 import {
-  type ISampleModel,
-  loadSampleClass,
-} from "./modules/sample/db/models/Sample.ts";
-import type { ISampleDocument } from "./modules/sample/db/definitions/sample.ts";
+  type IEduflowClassDocument,
+  type IEduflowHomeworkDocument,
+  type IEduflowLessonPlanDocument,
+  type IEduflowMemberDocument,
+  type IEduflowNotificationDocument,
+  type IEduflowSubmissionDocument,
+  eduflowClassSchema,
+  eduflowHomeworkSchema,
+  eduflowLessonPlanSchema,
+  eduflowMemberSchema,
+  eduflowNotificationSchema,
+  eduflowSubmissionSchema,
+} from "./modules/eduflow/db/definitions/eduflow.ts";
 
 export interface IModels {
-  Samples: ISampleModel;
+  EduflowMembers: Model<IEduflowMemberDocument>;
+  EduflowClasses: Model<IEduflowClassDocument>;
+  EduflowHomework: Model<IEduflowHomeworkDocument>;
+  EduflowSubmissions: Model<IEduflowSubmissionDocument>;
+  EduflowLessonPlans: Model<IEduflowLessonPlanDocument>;
+  EduflowNotifications: Model<IEduflowNotificationDocument>;
 }
 
 /**
@@ -28,9 +42,29 @@ export type Context = Omit<IMainContext, "models"> & {
 const loadClasses = (db: Connection) => {
   const models = {} as IModels;
 
-  models.Samples = db.model<ISampleDocument, ISampleModel>(
-    "eduflow_samples",
-    loadSampleClass(models),
+  models.EduflowMembers = db.model<IEduflowMemberDocument>(
+    "eduflow_members",
+    eduflowMemberSchema,
+  );
+  models.EduflowClasses = db.model<IEduflowClassDocument>(
+    "eduflow_classes",
+    eduflowClassSchema,
+  );
+  models.EduflowHomework = db.model<IEduflowHomeworkDocument>(
+    "eduflow_homework",
+    eduflowHomeworkSchema,
+  );
+  models.EduflowSubmissions = db.model<IEduflowSubmissionDocument>(
+    "eduflow_submissions",
+    eduflowSubmissionSchema,
+  );
+  models.EduflowLessonPlans = db.model<IEduflowLessonPlanDocument>(
+    "eduflow_lesson_plans",
+    eduflowLessonPlanSchema,
+  );
+  models.EduflowNotifications = db.model<IEduflowNotificationDocument>(
+    "eduflow_notifications",
+    eduflowNotificationSchema,
   );
 
   return models;

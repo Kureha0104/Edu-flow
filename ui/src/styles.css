@@ -57,6 +57,17 @@
   --color-sidebar: var(--sidebar-background);
   --color-scroll: var(--scroll);
 
+  /* Edu Flow demo palette */
+  --color-edu-bg: #080615;
+  --color-edu-card: #100b24;
+  --color-edu-card2: #171338;
+  --color-edu-lav: #c4b5fd;
+  --color-edu-purple: #7c3aed;
+  --color-edu-blue: #60a5fa;
+  --color-edu-text: #c5bddf;
+  --color-edu-cyan: #67e8f9;
+  --color-edu-border: #2a2450;
+
   --radius-lg: var(--radius);
   --radius-md: calc(var(--radius) - 2px);
   --radius-sm: calc(var(--radius) - 4px);

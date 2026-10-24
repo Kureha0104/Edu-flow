@@ -22,20 +22,44 @@ The UI uses erxes's `erxes-ui`/`ui-modules` design system, installed from npm
 host supplies them at runtime via Module Federation singletons — they are
 installed only so TypeScript and Rspack can resolve the imports.
 
-## What's in the scaffold
+## What's in the demo
 
-- `api/` — federated subgraph booted by `startPlugin`: `/health`, `/graphql`,
-  tenant-bound Mongoose models, an `eduflowStatus` diagnostic query and a
-  permission-guarded, paginated `eduflowSamples` example.
-- `ui/` — Module Federation remote exporting `CONFIG` and the `Eduflow` page at
-  `/eduflow`, with an overview, live connection card, sample list and
-  `/eduflow/settings`.
-- `docs/erxes-integration.md` — discovery, loading and trusted-gateway details.
+- **Teacher workspace** — assign homework, review student photo submissions,
+  approve or request rework, and move lesson plans through draft → review →
+  approved.
+- **Student streak view** — Duolingo-style streak, XP and level; photograph the
+  notebook, get a mock AI check, resubmit when asked.
+- **Parent view** — per-child completion, AI feedback, streak/XP and a dummy SMS
+  inbox.
+- **Seeded demo school** — Ms. Sara, Anu/Bilguun/Sarnai and Mrs. Tuya are created
+  automatically on the first `eduflowDemo` query.
+- **Demo boundaries** — the role switcher is a UI preview and the signed-in
+  owner bypasses permissions. The API already declares granular homework,
+  submission, lesson-plan and notification actions; mapping real school roles
+  to them is the next step.
 
-`sample` / `Samples` / `eduflowSamples` are reference code showing the whole
-path (permission → model → resolver → codegen → Apollo → page). Replace them
-with Edu Flow's real modules; keep the naming, tenant-scoping and permission
-rules in [AGENTS.md](AGENTS.md).
+Photo review and SMS are simulated but the flow is real:
+`upload → AI-style score → teacher approval → streak/XP update → parent record`.
+Replace `runMockAi` in [api/src/graphql/schema.ts](api/src/graphql/schema.ts)
+with a vision model, and `notifyParent` with Twilio, without changing the
+workflow.
+
+## Demo walkthrough
+
+1. Sign in at `http://localhost:3001` (the local owner created during setup).
+2. Open `http://localhost:3001/eduflow`.
+3. Switch **Teacher / Student / Parent** at the top right.
+4. As Student, add a photo to an assignment and submit it for the AI check.
+5. As Teacher, approve it or request rework; as Parent, see the progress and
+   dummy SMS.
+
+Reset the demo school (drops only `eduflow_*` collections, then reseeds):
+
+```sh
+docker exec eduflow-mongo mongosh erxes --quiet \
+  --eval 'db.getCollectionNames().filter(c=>c.startsWith("eduflow")).forEach(c=>db.getCollection(c).drop())'
+```
+
 
 ## Develop
 

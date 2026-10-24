@@ -1,246 +1,227 @@
 import { useQuery } from "@apollo/client";
-import type { ComponentType, ReactNode } from "react";
 import {
   IconBook,
-  IconDatabase,
-  IconExternalLink,
-  IconLayoutDashboard,
-  IconSandbox,
+  IconFlame,
+  IconSchool,
   IconSettings,
+  IconSparkles,
+  IconUsers,
 } from "@tabler/icons-react";
-// Root imports on purpose: core-ui shares `erxes-ui`/`ui-modules` as Module
-// Federation singletons keyed on the bare specifier, so deep imports would
-// bundle second private copies instead of reusing the host's.
-import {
-  Badge,
-  Breadcrumb,
-  Button,
-  Card,
-  Separator,
-  Skeleton,
-  cn,
-} from "erxes-ui";
+import { useState } from "react";
+import { Breadcrumb, Button, Separator, Skeleton } from "erxes-ui";
 import { PageHeader } from "ui-modules";
 import { Link } from "react-router";
 import manifest from "../../../erxes.json" with { type: "json" };
-import { STATUS_QUERY } from "../graphql";
-import { Samples } from "../Samples";
+import { DEMO_QUERY, STUDENTS_QUERY } from "../graphql";
+import { ParentView } from "../modules/eduflow/ParentView";
+import { RoleSwitch, type DemoRole } from "../modules/eduflow/RoleSwitch";
+import { StudentView } from "../modules/eduflow/StudentView";
+import { TeacherView } from "../modules/eduflow/TeacherView";
+import { ErrorBanner } from "../modules/eduflow/ui";
 
 const { path } = manifest.ui;
 
-const Dot = ({ className }: { className?: string }) => (
-  <span
-    className={cn(
-      "eduflow:inline-block eduflow:size-2 eduflow:rounded-full",
-      className,
-    )}
-  />
-);
-
-const StatusRow = ({ label, children }: { label: string; children: ReactNode }) => (
-  <div className="eduflow:flex eduflow:items-center eduflow:justify-between eduflow:gap-4 eduflow:text-sm">
-    <span className="eduflow:text-muted-foreground">{label}</span>
-    <span className="eduflow:flex eduflow:items-center eduflow:gap-2 eduflow:font-medium">
-      {children}
-    </span>
-  </div>
-);
-
-const ConnectionCard = () => {
-  const { data, loading, error, refetch } = useQuery(STATUS_QUERY);
-  const status = data?.eduflowStatus;
-
-  const pending = (
-    <>
-      <Dot className="eduflow:animate-pulse eduflow:bg-muted-foreground" />
-      <Skeleton className="eduflow:h-4 eduflow:w-24" />
-    </>
-  );
-
-  return (
-    <Card className="eduflow:w-full eduflow:md:w-80 eduflow:shrink-0">
-      <Card.Header>
-        <Card.Title className="eduflow:text-sm">Connection</Card.Title>
-        <Card.Description>
-          Live status of this plugin inside erxes
-        </Card.Description>
-      </Card.Header>
-      <Card.Content className="eduflow:flex eduflow:flex-col eduflow:gap-3">
-        <StatusRow label="API">
-          {loading ? (
-            pending
-          ) : error ? (
-            <>
-              <Dot className="eduflow:bg-destructive" />
-              <span>Unreachable</span>
-              <Button variant="ghost" size="sm" onClick={() => refetch()}>
-                Retry
-              </Button>
-            </>
-          ) : (
-            <>
-              <Dot className="eduflow:bg-success" />
-              <span>Connected · v{status?.version}</span>
-            </>
-          )}
-        </StatusRow>
-        <StatusRow label="Gateway">
-          {loading ? (
-            pending
-          ) : error ? (
-            <>
-              <Dot className="eduflow:bg-destructive" />
-              <span
-                className="eduflow:truncate eduflow:max-w-40"
-                title={error.message}
-              >
-                {error.message}
-              </span>
-            </>
-          ) : (
-            <>
-              <Dot className="eduflow:bg-success" />
-              <span>Federated as {status?.plugin}</span>
-            </>
-          )}
-        </StatusRow>
-        <StatusRow label="Tenant">
-          {loading ? pending : (status?.subdomain ?? "—")}
-        </StatusRow>
-        <StatusRow label="Signed in">
-          {loading
-            ? pending
-            : (status && (status.userEmail ?? status.userId ?? "Anonymous")) ||
-              "—"}
-        </StatusRow>
-      </Card.Content>
-    </Card>
-  );
-};
-
-const StepCard = ({
-  icon: Icon,
-  title,
-  description,
-  code,
-}: {
-  icon: ComponentType<{ className?: string }>;
-  title: string;
-  description: string;
-  code: string;
-}) => (
-  <Card>
-    <Card.Header>
-      <div className="eduflow:flex eduflow:size-9 eduflow:items-center eduflow:justify-center eduflow:rounded-lg eduflow:bg-accent">
-        <Icon className="eduflow:size-5" />
-      </div>
-      <Card.Title>{title}</Card.Title>
-      <Card.Description>{description}</Card.Description>
-    </Card.Header>
-    <Card.Content>
-      <code className="eduflow:rounded eduflow:bg-muted eduflow:px-1.5 eduflow:py-0.5 eduflow:font-mono eduflow:text-xs">
-        {code}
-      </code>
-    </Card.Content>
-  </Card>
-);
-
-const STEPS = [
-  {
-    icon: IconDatabase,
-    title: "Model your data",
-    description:
-      "Define the records this plugin owns and expose them on the federated graph.",
-    code: "api/src/modules/sample",
-  },
-  {
-    icon: IconLayoutDashboard,
-    title: "Build the page",
-    description:
-      "Replace this overview with your module: lists with RecordTable, forms with Form, details in a Sheet.",
-    code: "ui/src/pages/IndexPage.tsx",
-  },
-];
-
-export const IndexPage = () => (
-  <div className="eduflow:flex eduflow:h-full eduflow:flex-col">
-    <PageHeader>
-      <PageHeader.Start>
-        <Breadcrumb>
-          <Breadcrumb.List className="eduflow:gap-1">
-            <Breadcrumb.Item>
-              <Button variant="ghost" asChild>
-                <Link to={`/${path}`}>
-                  <IconSandbox />
-                  {manifest.title}
-                </Link>
-              </Button>
-            </Breadcrumb.Item>
-          </Breadcrumb.List>
-        </Breadcrumb>
-        <Separator.Inline />
-        <PageHeader.FavoriteToggleButton
-          breadcrumb={[manifest.title]}
-          icon="IconSandbox"
+const LoadingGrid = () => (
+  <div className="eduflow:grid eduflow:gap-4">
+    <div className="eduflow:grid eduflow:gap-3 eduflow:sm:grid-cols-2 eduflow:xl:grid-cols-4">
+      {Array.from({ length: 4 }, (_, index) => (
+        <Skeleton
+          key={index}
+          className="eduflow:h-24 eduflow:rounded-2xl eduflow:bg-edu-card"
         />
-      </PageHeader.Start>
-      <PageHeader.End>
-        <Button variant="outline" asChild>
-          <Link to={`/${path}/settings`}>
-            <IconSettings />
-            Settings
-          </Link>
-        </Button>
-      </PageHeader.End>
-    </PageHeader>
-    <div className="eduflow:flex-1 eduflow:overflow-auto">
-      <div className="eduflow:mx-auto eduflow:flex eduflow:w-full eduflow:max-w-5xl eduflow:flex-col eduflow:gap-6 eduflow:p-6">
-        <section className="eduflow:relative eduflow:overflow-hidden eduflow:rounded-xl eduflow:border eduflow:border-border eduflow:bg-background eduflow:p-8 eduflow:shadow-xs">
-          <div
-            aria-hidden
-            className="eduflow:pointer-events-none eduflow:absolute eduflow:inset-0 eduflow:bg-gradient-to-br eduflow:from-primary/10 eduflow:via-transparent eduflow:to-transparent"
-          />
-          <div className="eduflow:relative eduflow:flex eduflow:flex-col eduflow:gap-6 eduflow:md:flex-row eduflow:md:items-start eduflow:md:justify-between">
-            <div className="eduflow:flex eduflow:max-w-xl eduflow:flex-col eduflow:gap-4">
-              <div>
-                <Badge variant="info">Plugin · v{manifest.version}</Badge>
-              </div>
-              <h1 className="eduflow:text-2xl eduflow:font-semibold eduflow:tracking-tight">
-                Welcome to {manifest.title}
-              </h1>
-              <p className="eduflow:text-sm eduflow:leading-relaxed eduflow:text-muted-foreground">
-                {manifest.description}
-              </p>
-              <div className="eduflow:flex eduflow:flex-wrap eduflow:gap-2">
-                <Button asChild>
-                  <Link to={`/${path}/settings`}>
-                    <IconSettings />
-                    Open settings
-                  </Link>
-                </Button>
-                <Button variant="outline" asChild>
-                  <a
-                    href="https://erxes.io/docs/create-plugin-standalone"
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    <IconBook />
-                    Developer guide
-                    <IconExternalLink />
-                  </a>
-                </Button>
-              </div>
-            </div>
-            <ConnectionCard />
-          </div>
-        </section>
-        <Samples />
-        <div className="eduflow:grid eduflow:gap-4 eduflow:md:grid-cols-2">
-          {STEPS.map((step) => (
-            <StepCard key={step.title} {...step} />
-          ))}
-        </div>
-      </div>
+      ))}
+    </div>
+    <div className="eduflow:grid eduflow:gap-4 eduflow:xl:grid-cols-2">
+      <Skeleton className="eduflow:h-80 eduflow:rounded-2xl eduflow:bg-edu-card" />
+      <Skeleton className="eduflow:h-80 eduflow:rounded-2xl eduflow:bg-edu-card" />
     </div>
   </div>
 );
+
+const JourneySteps = () => {
+  const steps = [
+    { icon: IconBook, label: "Teacher assigns" },
+    { icon: IconSchool, label: "Student photographs" },
+    { icon: IconSparkles, label: "AI checks" },
+    { icon: IconUsers, label: "Parent follows" },
+  ];
+
+  return (
+    <div className="eduflow:mt-4 eduflow:flex eduflow:flex-wrap eduflow:items-center eduflow:gap-2">
+      {steps.map(({ icon: Icon, label }, index) => (
+        <div key={label} className="eduflow:flex eduflow:items-center eduflow:gap-2">
+          <span className="eduflow:inline-flex eduflow:items-center eduflow:gap-1.5 eduflow:rounded-full eduflow:border eduflow:border-edu-border eduflow:bg-edu-card2/60 eduflow:px-2.5 eduflow:py-1 eduflow:text-[10px] eduflow:text-edu-text">
+            <Icon className="eduflow:size-3.5 eduflow:text-edu-lav" />
+            {label}
+          </span>
+          {index < steps.length - 1 && (
+            <span className="eduflow:text-edu-text/40">→</span>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+};
+
+export const IndexPage = () => {
+  const [role, setRole] = useState<DemoRole>("teacher");
+  const [studentId, setStudentId] = useState<string>();
+
+  const {
+    data,
+    loading,
+    error,
+    refetch,
+  } = useQuery(DEMO_QUERY, {
+    variables: {
+      role,
+      memberId: role === "student" ? studentId : undefined,
+    },
+    fetchPolicy: "cache-and-network",
+  });
+
+  const { data: studentsData } = useQuery(STUDENTS_QUERY, {
+    fetchPolicy: "cache-and-network",
+  });
+
+  const demo = data?.eduflowDemo;
+  const students = studentsData?.eduflowMembers ?? demo?.students ?? [];
+  const switching = loading || (demo?.role && demo.role !== role);
+
+  const handleRole = (next: DemoRole) => {
+    setRole(next);
+    setStudentId(undefined);
+  };
+
+  return (
+    <div className="eduflow:flex eduflow:h-full eduflow:flex-col eduflow:bg-edu-bg">
+      <PageHeader>
+        <PageHeader.Start>
+          <Breadcrumb>
+            <Breadcrumb.List className="eduflow:gap-1">
+              <Breadcrumb.Item>
+                <Button variant="ghost" asChild>
+                  <Link to={`/${path}`}>
+                    <IconSchool />
+                    {manifest.title}
+                  </Link>
+                </Button>
+              </Breadcrumb.Item>
+              <Breadcrumb.Separator />
+              <Breadcrumb.Item>
+                <span className="eduflow:text-xs eduflow:text-edu-text">
+                  {role === "teacher"
+                    ? "Teacher workspace"
+                    : role === "student"
+                      ? "Student streak"
+                      : "Parent progress"}
+                </span>
+              </Breadcrumb.Item>
+            </Breadcrumb.List>
+          </Breadcrumb>
+          <Separator.Inline />
+          <PageHeader.FavoriteToggleButton
+            breadcrumb={[manifest.title]}
+            icon="IconSchool"
+          />
+        </PageHeader.Start>
+        <PageHeader.End>
+          <Button variant="outline" asChild>
+            <Link to={`/${path}/settings`}>
+              <IconSettings />
+              Settings
+            </Link>
+          </Button>
+        </PageHeader.End>
+      </PageHeader>
+
+      <div className="eduflow:flex-1 eduflow:overflow-auto">
+        <div className="eduflow:mx-auto eduflow:flex eduflow:w-full eduflow:max-w-7xl eduflow:flex-col eduflow:gap-5 eduflow:p-5 eduflow:md:p-6">
+          <section className="eduflow:relative eduflow:overflow-hidden eduflow:rounded-2xl eduflow:border eduflow:border-edu-border eduflow:bg-edu-card eduflow:p-5 eduflow:shadow-[0_0_80px_-40px_#7C3AED] eduflow:md:p-6">
+            <div
+              aria-hidden
+              className="eduflow:pointer-events-none eduflow:absolute eduflow:-right-16 eduflow:-top-24 eduflow:size-72 eduflow:rounded-full eduflow:bg-edu-purple/25 eduflow:blur-3xl"
+            />
+            <div className="eduflow:relative eduflow:grid eduflow:gap-5 eduflow:lg:grid-cols-[1fr_420px] eduflow:lg:items-center">
+              <div>
+                <div className="eduflow:flex eduflow:flex-wrap eduflow:items-center eduflow:gap-2">
+                  <span className="eduflow:rounded-full eduflow:border eduflow:border-edu-cyan/30 eduflow:bg-edu-cyan/10 eduflow:px-2.5 eduflow:py-0.5 eduflow:text-[10px] eduflow:font-medium eduflow:text-edu-cyan">
+                    DEMO SCHOOL · GRADE 5A
+                  </span>
+                  <span className="eduflow:flex eduflow:items-center eduflow:gap-1 eduflow:text-[10px] eduflow:text-edu-text">
+                    <IconFlame className="eduflow:size-3.5 eduflow:text-edu-lav" />
+                    streaks only for students
+                  </span>
+                </div>
+                <h1 className="eduflow:mt-3 eduflow:text-2xl eduflow:font-semibold eduflow:tracking-tight eduflow:text-white eduflow:md:text-3xl">
+                  Homework that keeps the streak alive
+                </h1>
+                <p className="eduflow:mt-2 eduflow:max-w-xl eduflow:text-sm eduflow:leading-relaxed eduflow:text-edu-text">
+                  Teachers assign, students photograph their notebook, the demo
+                  AI checks the work, and parents see progress — with a dummy
+                  SMS bot standing in for the real one.
+                </p>
+                <JourneySteps />
+              </div>
+              <div className="eduflow:grid eduflow:gap-2">
+                <RoleSwitch role={role} onChange={handleRole} />
+                <p className="eduflow:px-1 eduflow:text-[10px] eduflow:text-edu-text">
+                  Switch roles to preview the same school from each side.
+                </p>
+              </div>
+            </div>
+          </section>
+
+          {error && !demo && (
+            <ErrorBanner
+              message={error.message}
+              onRetry={() => {
+                void refetch();
+              }}
+            />
+          )}
+
+          {!demo && loading && <LoadingGrid />}
+
+          {demo && switching && (
+            <div className="eduflow:flex eduflow:items-center eduflow:gap-2 eduflow:text-[11px] eduflow:text-edu-text">
+              <span className="eduflow:size-2 eduflow:animate-pulse eduflow:rounded-full eduflow:bg-edu-lav" />
+              Switching to {role} view…
+            </div>
+          )}
+
+          {demo && !switching && role === "teacher" && (
+            <TeacherView demo={demo} refetch={refetch} />
+          )}
+
+          {demo && !switching && role === "student" && (
+            <StudentView
+              demo={demo}
+              students={students}
+              selectedStudentId={studentId ?? demo.member?._id}
+              onSelectStudent={setStudentId}
+              refetch={refetch}
+            />
+          )}
+
+          {demo && !switching && role === "parent" && (
+            <ParentView demo={demo} refetch={refetch} />
+          )}
+
+          <div className="eduflow:flex eduflow:flex-wrap eduflow:items-center eduflow:justify-between eduflow:gap-2 eduflow:rounded-2xl eduflow:border eduflow:border-edu-border eduflow:bg-edu-card/60 eduflow:px-4 eduflow:py-3">
+            <p className="eduflow:text-[10px] eduflow:text-edu-text">
+              Demo data is seeded automatically per tenant. Real school SSO,
+              vision AI and SMS are the next integrations.
+            </p>
+            <Link
+              to={`/${path}/settings`}
+              className="eduflow:text-[10px] eduflow:font-medium eduflow:text-edu-lav hover:eduflow:text-white"
+            >
+              Plugin settings →
+            </Link>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};

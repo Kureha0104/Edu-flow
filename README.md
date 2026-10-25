@@ -184,3 +184,12 @@ Docker images, public UI hosting, HTTPS and multi-device access.
 
 See [docs/erxes-integration.md](docs/erxes-integration.md) for how the plugin
 plugs into erxes and [AGENTS.md](AGENTS.md) for the rules to keep it working.
+
+
+## Hacktoberfest 2026
+
+Edu Flow is a three-sided learning platform for teachers, students, and parents. We welcome thoughtful contributions to make this shared learning workflow more useful and accessible.
+
+Good places to start include Mongolian translations, accessibility, documentation, demo workflows, and reported bugs. Please open or comment on an issue before starting a larger change, then submit a focused pull request with a clear description. Run `npm run check`, `npm run lint`, and `npm run build` before submitting.
+
+Hacktoberfest 2026 no longer counts pull requests or merge requests toward event rewards. See the [official Hacktoberfest FAQ](https://hacktoberfest.com/questions) for current participation details.
